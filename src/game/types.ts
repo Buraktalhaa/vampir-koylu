@@ -1,0 +1,98 @@
+export type PlayerId = string;
+
+export type TeamId = 'village' | 'vampire';
+
+export type Phase = 'night' | 'day';
+
+/**
+ * Oyundaki tüm mekanikler bu efektlerden oluşur. Yeni bir karakter genelde
+ * mevcut efektleri yeniden kullanır; yeni bir mekanik gerekiyorsa
+ * `engine/effects.ts` içine tek bir handler eklenir.
+ */
+export type EffectKind = 'protect' | 'kill' | 'investigate';
+
+export type AbilityTrigger =
+  /** Her gece kullanılabilir. */
+  | 'night'
+  /** Sahibi öldüğünde tetiklenir (ör. Avcı'nın son atışı). */
+  | 'onDeath';
+
+export type TargetRule = {
+  /** Kendini seçebilir mi? Varsayılan: false */
+  allowSelf?: boolean;
+  /** Kendi takım arkadaşını seçebilir mi? Varsayılan: true */
+  allowTeammates?: boolean;
+  /** Aynı kişiyi art arda iki gece seçemez. Varsayılan: false */
+  noRepeatTarget?: boolean;
+};
+
+export type Ability = {
+  /** Rol içinde benzersiz anahtar. */
+  id: string;
+  trigger: AbilityTrigger;
+  effect: EffectKind;
+  target?: TargetRule;
+  /** Toplam kullanım hakkı. undefined = sınırsız */
+  uses?: number;
+  /**
+   * Takımdaki herkes ortak oy verir, tek bir sonuç uygulanır
+   * (ör. vampirlerin gece kurbanı).
+   */
+  teamVote?: boolean;
+  /** İlk gece kullanılamaz. */
+  skipFirstNight?: boolean;
+};
+
+export type RoleDefinition<Id extends string = string> = {
+  id: Id;
+  team: TeamId;
+  abilities: readonly Ability[];
+  /** Takım arkadaşlarını oyun başında görür. */
+  knowsTeammates?: boolean;
+  /** Araştırıldığında farklı bir rol olarak görünür (ileride: gizli roller). */
+  appearsAs?: string;
+  /** Oyunda en fazla 1 tane olabilir. */
+  unique?: boolean;
+  /** Bu rolün oyuna eklenebilmesi için gereken minimum oyuncu sayısı. */
+  minPlayers?: number;
+};
+
+export type AbilityState = {
+  usesLeft?: number;
+  lastTarget?: PlayerId;
+};
+
+export type Player = {
+  id: PlayerId;
+  name: string;
+  roleId: string;
+  alive: boolean;
+  abilityState: Record<string, AbilityState>;
+};
+
+export type DeathCause = 'vampire' | 'lynch' | 'hunter' | 'ability';
+
+export type GameEvent =
+  | { type: 'death'; playerId: PlayerId; cause: DeathCause; by?: PlayerId }
+  | { type: 'saved'; playerId: PlayerId }
+  | { type: 'investigated'; actorId: PlayerId; targetId: PlayerId; seenRoleId: string };
+
+export type PendingTrigger = { actorId: PlayerId; abilityId: string };
+
+export type GameState = {
+  players: Player[];
+  phase: Phase;
+  round: number;
+  events: GameEvent[];
+  /** Kullanıcı girdisi bekleyen tetiklenmiş yetenekler (ör. ölen Avcı'nın atışı). */
+  pendingTriggers: PendingTrigger[];
+  winner: TeamId | null;
+};
+
+export type ActionSubmission = {
+  actorId: PlayerId;
+  abilityId: string;
+  targetId: PlayerId;
+};
+
+export type Rng = () => number;
