@@ -1,4 +1,5 @@
 import { getRole, ROLE_IDS, type RoleId } from '../roles';
+import { DEFAULT_SETTINGS, type GameSettings } from '../settings';
 import type { GameState, Player, Rng } from '../types';
 
 /**
@@ -124,7 +125,12 @@ export function allRandomSetup(): RoleSetup {
   return Object.fromEntries(ROLE_IDS.map((id) => [id, 'random'])) as RoleSetup;
 }
 
-export function createGame(names: string[], setup: RoleSetup, rng: Rng = Math.random): GameState {
+export function createGame(
+  names: string[],
+  setup: RoleSetup,
+  settings: GameSettings = DEFAULT_SETTINGS,
+  rng: Rng = Math.random,
+): GameState {
   const counts = rollRoles(names.length, setup, rng);
   const roleIds = (Object.entries(counts) as [RoleId, number][]).flatMap(([id, n]) => Array<RoleId>(n).fill(id));
   const shuffled = shuffle(roleIds, rng);
@@ -135,5 +141,5 @@ export function createGame(names: string[], setup: RoleSetup, rng: Rng = Math.ra
     return { id: `p${i + 1}`, name, roleId: role.id, alive: true, abilityState };
   });
 
-  return { players, phase: 'night', round: 1, events: [], pendingTriggers: [], winner: null };
+  return { players, settings, phase: 'night', round: 1, events: [], pendingTriggers: [], winner: null };
 }

@@ -5,8 +5,14 @@ export function teamOf(player: Player): TeamId {
   return getRole(player.roleId).team;
 }
 
+/** Hayattaki oyuncular, oturma sırasıyla. Telefon sadece bunlar arasında dolaşır. */
 export function alivePlayers(state: GameState): Player[] {
   return state.players.filter((p) => p.alive);
+}
+
+/** Herkese açık rol bilgisi: ölmüşse ve ayar açıksa rolü, aksi halde null. */
+export function publicRoleOf(state: GameState, player: Player): string | null {
+  return !player.alive && state.settings.revealRoleOnDeath ? player.roleId : null;
 }
 
 type TeamDefinition = {

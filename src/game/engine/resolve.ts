@@ -2,6 +2,8 @@ import { getRole } from '../roles';
 import { checkWinner, teamOf } from '../teams';
 import type {
   ActionSubmission,
+  EventBody,
+  GameEvent,
   GameState,
   PendingTrigger,
   Player,
@@ -80,8 +82,17 @@ function withAbilityUsed(state: GameState, players: Player[], actorId: PlayerId,
   });
 }
 
+/** Olaylara tur ve faz bilgisini ekler. */
+function stamp(at: { round: number; phase: GameState['phase'] }, events: EventBody[]): GameEvent[] {
+  return events.map((e) => ({ ...e, round: at.round, phase: at.phase }));
+}
+
 /** Ölümleri uygular, ölenlerin onDeath yeteneklerini kuyruğa alır, kazananı kontrol eder. */
-function applyDeaths(state: GameState, deaths: EffectContext['deaths']): GameState {
+function applyDeaths(
+  state: GameState,
+  deaths: EffectContext['deaths'],
+  at: { round: number; phase: GameState['phase'] } = state,
+): GameState {
   const players = state.players.map((p) => (deaths.has(p.id) ? { ...p, alive: false } : p));
   const triggers: PendingTrigger[] = [];
   for (const [id, { cause }] of deaths) {
@@ -89,11 +100,11 @@ function applyDeaths(state: GameState, deaths: EffectContext['deaths']): GameSta
     for (const ability of getRole(player.roleId).abilities) {
       if (ability.trigger !== 'onDeath' || !canUseAbility(state, player, ability)) continue;
       if (!ability.deathCauses || ability.deathCauses.includes(cause)) {
-        triggers.push({ actorId: id, abilityId: ability.id });
+        triggers.push({ actorId: id, abilityId: ability.id, round: at.round, phase: at.phase });
       }
     }
   }
-  const events = [...deaths].map(([playerId, d]) => ({ type: 'death' as const, playerId, ...d }));
+  const events = stamp(at, [...deaths].map(([playerId, d]) => ({ type: 'death' as const, playerId, ...d })));
   const next = {
     ...state,
     players,
@@ -128,25 +139,48 @@ export function resolveNight(
   let players = state.players;
   for (const sub of used) players = withAbilityUsed(state, players, sub.actorId, sub.abilityId, sub.targetId);
 
-  const next = applyDeaths({ ...state, players, events: [...state.events, ...ctx.events] }, ctx.deaths);
+  const usedEvents: EventBody[] = used.map((u) => ({ type: 'ability', actorId: u.actorId, abilityId: u.abilityId, targetId: u.targetId }));
+  const next = applyDeaths(
+    { ...state, players, events: [...state.events, ...stamp(state, [...usedEvents, ...ctx.events])] },
+    ctx.deaths,
+  );
   return { ...next, phase: 'day' };
 }
 
-/** Gündüz oylaması. Beraberlikte kimse asılmaz. */
-export function resolveDayVote(state: GameState, votes: Record<PlayerId, PlayerId>): GameState {
-  const counts = new Map<PlayerId, number>();
-  for (const [voterId, targetId] of Object.entries(votes)) {
-    if (!findPlayer(state, voterId).alive || !findPlayer(state, targetId).alive) continue;
-    counts.set(targetId, (counts.get(targetId) ?? 0) + 1);
-  }
-  const max = Math.max(0, ...counts.values());
-  const top = [...counts].filter(([, c]) => c === max);
+/** Gece hiç oynanmadan gündüze geçer (ör. ilk gece yetenekler kapalıysa). */
+export function skipNight(state: GameState): GameState {
+  return { ...state, phase: 'day' };
+}
+
+/** Oy sayımından asılacak kişiyi bulur. Beraberlikte kimse asılmaz. */
+function resolveTally(state: GameState, tally: Map<PlayerId, number>): GameState {
+  const max = Math.max(0, ...tally.values());
+  const top = [...tally].filter(([, c]) => c === max);
 
   const deaths: EffectContext['deaths'] = new Map();
   if (max > 0 && top.length === 1) deaths.set(top[0][0], { cause: 'lynch' });
 
   const next = applyDeaths(state, deaths);
   return { ...next, phase: 'night', round: state.round + 1 };
+}
+
+/** Gizli oylama (voteMode 'secret'): her oyuncunun kime oy verdiği. */
+export function resolveDayVote(state: GameState, votes: Record<PlayerId, PlayerId>): GameState {
+  const tally = new Map<PlayerId, number>();
+  for (const [voterId, targetId] of Object.entries(votes)) {
+    if (!findPlayer(state, voterId).alive || !findPlayer(state, targetId).alive) continue;
+    tally.set(targetId, (tally.get(targetId) ?? 0) + 1);
+  }
+  return resolveTally(state, tally);
+}
+
+/** Açık oylama (voteMode 'open'): her oyuncunun aldığı oy sayısı elle girilir. */
+export function resolveDayVoteCounts(state: GameState, counts: Record<PlayerId, number>): GameState {
+  const tally = new Map<PlayerId, number>();
+  for (const [targetId, n] of Object.entries(counts)) {
+    if (n > 0 && findPlayer(state, targetId).alive) tally.set(targetId, n);
+  }
+  return resolveTally(state, tally);
 }
 
 /** Ölen oyuncunun tetiklenen yeteneğini (ör. İntikamcı) çözer. */
@@ -163,9 +197,11 @@ export function resolveTrigger(state: GameState, trigger: PendingTrigger, target
     (t) => !(t.actorId === trigger.actorId && t.abilityId === trigger.abilityId),
   );
   const players = withAbilityUsed(state, state.players, actor.id, ability.id, targetId);
+  const abilityEvent: EventBody = { type: 'ability', actorId: actor.id, abilityId: ability.id, targetId };
   return applyDeaths(
-    { ...state, players, pendingTriggers: remaining, events: [...state.events, ...ctx.events] },
+    { ...state, players, pendingTriggers: remaining, events: [...state.events, ...stamp(trigger, [abilityEvent, ...ctx.events])] },
     ctx.deaths,
+    trigger,
   );
 }
 
