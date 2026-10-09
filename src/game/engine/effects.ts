@@ -1,5 +1,5 @@
 import { getRole } from '../roles';
-import type { DeathCause, EffectKind, GameEvent, PlayerId } from '../types';
+import type { DeathCause, EffectKind, EventBody, PlayerId } from '../types';
 
 export type ResolvedAction = {
   actorId: PlayerId;
@@ -14,7 +14,7 @@ export type EffectContext = {
   aliveIds: PlayerId[];
   protectedIds: Set<PlayerId>;
   deaths: Map<PlayerId, { cause: DeathCause; by?: PlayerId }>;
-  events: GameEvent[];
+  events: EventBody[];
 };
 
 type EffectHandler = {

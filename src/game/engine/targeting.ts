@@ -20,7 +20,7 @@ export function canUseAbility(state: GameState, player: Player, ability: Ability
   if (usesLeft !== undefined && usesLeft <= 0) return false;
   if (ability.trigger === 'night') {
     if (!player.alive || state.phase !== 'night') return false;
-    if (ability.skipFirstNight && state.round === 1) return false;
+    if (state.round === 1 && (ability.skipFirstNight || !state.settings.firstNightActions)) return false;
   }
   return true;
 }

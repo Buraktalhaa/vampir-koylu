@@ -1,3 +1,5 @@
+import type { GameSettings } from './settings';
+
 export type PlayerId = string;
 
 export type TeamId = 'village' | 'vampire';
@@ -80,15 +82,23 @@ export type Player = {
 
 export type DeathCause = 'vampire' | 'lynch' | 'spell' | 'revenge' | 'ability';
 
-export type GameEvent =
+export type EventBody =
   | { type: 'death'; playerId: PlayerId; cause: DeathCause; by?: PlayerId }
   | { type: 'saved'; playerId: PlayerId }
-  | { type: 'investigated'; actorId: PlayerId; targetId: PlayerId; seenRoleId: string };
+  | { type: 'investigated'; actorId: PlayerId; targetId: PlayerId; seenRoleId: string }
+  /** Kullanılan yetenek (oyun sonu özeti için). Takım oylarında her oyuncunun seçimi ayrı kaydedilir. */
+  | { type: 'ability'; actorId: PlayerId; abilityId: string; targetId?: PlayerId };
 
-export type PendingTrigger = { actorId: PlayerId; abilityId: string };
+/** Her olay hangi tur ve fazda olduğunu taşır. */
+export type GameEvent = EventBody & { round: number; phase: Phase };
+
+/** Tetiklendiği tur/faz saklanır; olaylar oraya yazılır (ör. asılan İntikamcı'nın atışı gündüze ait). */
+export type PendingTrigger = { actorId: PlayerId; abilityId: string; round: number; phase: Phase };
 
 export type GameState = {
+  /** Oturma / telefonun dolaşma sırası. */
   players: Player[];
+  settings: GameSettings;
   phase: Phase;
   round: number;
   events: GameEvent[];
