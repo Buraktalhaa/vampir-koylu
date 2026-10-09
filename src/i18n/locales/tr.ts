@@ -1,7 +1,14 @@
 import type { RoleId } from '../../game/roles';
 import type { TeamId } from '../../game/types';
 
-export type RoleText = { name: string; description: string; abilityPrompt?: string };
+export type AbilityText = { name: string; prompt?: string };
+
+export type RoleText = {
+  name: string;
+  description: string;
+  /** Yetenek id'sine göre metinler (roles/<id>.ts içindeki ability.id). */
+  abilities?: Record<string, AbilityText>;
+};
 
 export type Translation = {
   languageName: string;
@@ -23,22 +30,27 @@ export const tr: Translation = {
     vampire: {
       name: 'Vampir',
       description: 'Her gece diğer vampirlerle birlikte bir kurban seçersin. Takım arkadaşlarını tanırsın.',
-      abilityPrompt: 'Bu gece kimi ısıracaksınız?',
+      abilities: { bite: { name: 'Isırık', prompt: 'Bu gece kimi ısıracaksınız?' } },
     },
-    seer: {
+    witch: {
       name: 'Büyücü',
-      description: 'Her gece bir oyuncunun gerçek rolünü öğrenirsin.',
-      abilityPrompt: 'Kimin rolüne bakmak istiyorsun?',
+      description:
+        "İki büyün var, her biri bir kez kullanılır. Bir gecede yalnızca birini yapabilirsin: o gece herkesi korumak ya da bir oyuncuyu lanetleyip öldürmek. Şifacı'nın koruduğu kişiye lanetin işlemez.",
+      abilities: {
+        shield: { name: 'Koruma Kalkanı', prompt: 'Bu gece tüm köyü korumak istiyor musun?' },
+        curse: { name: 'Ölüm Laneti', prompt: 'Kimi lanetleyeceksin?' },
+      },
     },
     healer: {
       name: 'Şifacı',
-      description: 'Her gece bir oyuncuyu vampir saldırısından korursun. Aynı kişiyi art arda iki gece koruyamazsın.',
-      abilityPrompt: 'Bu gece kimi koruyacaksın?',
+      description:
+        'Her gece bir oyuncuyu korursun, kendini de koruyabilirsin. Aynı kişiyi art arda iki gece koruyamazsın.',
+      abilities: { heal: { name: 'Şifa', prompt: 'Bu gece kimi koruyacaksın?' } },
     },
-    hunter: {
-      name: 'Avcı',
-      description: 'Öldüğünde son bir atış yaparak bir oyuncuyu yanında götürürsün.',
-      abilityPrompt: 'Son kurşununu kime sıkacaksın?',
+    avenger: {
+      name: 'İntikamcı',
+      description: 'Köy seni asarsa yanında bir oyuncuyu daha götürürsün.',
+      abilities: { revenge: { name: 'İntikam', prompt: 'Yanında kimi götüreceksin?' } },
     },
   },
 };

@@ -4,7 +4,6 @@ import { defineRole } from './defineRole';
 export const healer = defineRole({
   id: 'healer',
   team: 'village',
-  unique: true,
   abilities: [
     {
       id: 'heal',

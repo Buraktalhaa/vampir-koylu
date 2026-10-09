@@ -25,14 +25,20 @@ export function canUseAbility(state: GameState, player: Player, ability: Ability
   return true;
 }
 
+export function needsTarget(ability: Ability): boolean {
+  return ability.target !== 'none';
+}
+
 export function getValidTargets(state: GameState, actor: Player, ability: Ability): Player[] {
+  if (ability.target === 'none') return [];
   const rule = ability.target ?? {};
-  const lastTarget = actor.abilityState[ability.id]?.lastTarget;
+  const last = actor.abilityState[ability.id];
+  const lastNightTarget = last?.lastUsedRound === state.round - 1 ? last.lastTarget : undefined;
   return state.players.filter((p) => {
     if (!p.alive) return false;
+    if (rule.noRepeatTarget && p.id === lastNightTarget) return false;
     if (p.id === actor.id) return rule.allowSelf ?? false;
     if (rule.allowTeammates === false && teamOf(p) === teamOf(actor)) return false;
-    if (rule.noRepeatTarget && p.id === lastTarget) return false;
     return true;
   });
 }

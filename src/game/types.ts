@@ -9,12 +9,12 @@ export type Phase = 'night' | 'day';
  * mevcut efektleri yeniden kullanır; yeni bir mekanik gerekiyorsa
  * `engine/effects.ts` içine tek bir handler eklenir.
  */
-export type EffectKind = 'protect' | 'kill' | 'investigate';
+export type EffectKind = 'protect' | 'protectAll' | 'kill' | 'investigate';
 
 export type AbilityTrigger =
   /** Her gece kullanılabilir. */
   | 'night'
-  /** Sahibi öldüğünde tetiklenir (ör. Avcı'nın son atışı). */
+  /** Sahibi öldüğünde tetiklenir (ör. İntikamcı). `deathCauses` ile daraltılabilir. */
   | 'onDeath';
 
 export type TargetRule = {
@@ -31,7 +31,12 @@ export type Ability = {
   id: string;
   trigger: AbilityTrigger;
   effect: EffectKind;
-  target?: TargetRule;
+  /** Hedef seçimi kuralları. `'none'` = hedefsiz (ör. herkesi koru). */
+  target?: TargetRule | 'none';
+  /** Bu yetenekle ölen oyuncunun ölüm nedeni. Varsayılan: 'ability' */
+  cause?: DeathCause;
+  /** onDeath: sadece bu nedenlerle ölünce tetiklenir. Boş = her ölümde. */
+  deathCauses?: readonly DeathCause[];
   /** Toplam kullanım hakkı. undefined = sınırsız */
   uses?: number;
   /**
@@ -51,6 +56,8 @@ export type RoleDefinition<Id extends string = string> = {
   knowsTeammates?: boolean;
   /** Araştırıldığında farklı bir rol olarak görünür (ileride: gizli roller). */
   appearsAs?: string;
+  /** Bir gecede kullanılabilecek en fazla yetenek sayısı. Varsayılan: 1 */
+  maxNightActions?: number;
   /** Oyunda en fazla 1 tane olabilir. */
   unique?: boolean;
   /** Bu rolün oyuna eklenebilmesi için gereken minimum oyuncu sayısı. */
@@ -60,6 +67,7 @@ export type RoleDefinition<Id extends string = string> = {
 export type AbilityState = {
   usesLeft?: number;
   lastTarget?: PlayerId;
+  lastUsedRound?: number;
 };
 
 export type Player = {
@@ -70,7 +78,7 @@ export type Player = {
   abilityState: Record<string, AbilityState>;
 };
 
-export type DeathCause = 'vampire' | 'lynch' | 'hunter' | 'ability';
+export type DeathCause = 'vampire' | 'lynch' | 'spell' | 'revenge' | 'ability';
 
 export type GameEvent =
   | { type: 'death'; playerId: PlayerId; cause: DeathCause; by?: PlayerId }
@@ -84,7 +92,7 @@ export type GameState = {
   phase: Phase;
   round: number;
   events: GameEvent[];
-  /** Kullanıcı girdisi bekleyen tetiklenmiş yetenekler (ör. ölen Avcı'nın atışı). */
+  /** Kullanıcı girdisi bekleyen tetiklenmiş yetenekler (ör. asılan İntikamcı'nın seçimi). */
   pendingTriggers: PendingTrigger[];
   winner: TeamId | null;
 };
@@ -92,7 +100,8 @@ export type GameState = {
 export type ActionSubmission = {
   actorId: PlayerId;
   abilityId: string;
-  targetId: PlayerId;
+  /** Hedefsiz yeteneklerde boş bırakılır. */
+  targetId?: PlayerId;
 };
 
 export type Rng = () => number;

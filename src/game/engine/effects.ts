@@ -3,13 +3,15 @@ import type { DeathCause, EffectKind, GameEvent, PlayerId } from '../types';
 
 export type ResolvedAction = {
   actorId: PlayerId;
-  targetId: PlayerId;
+  /** Hedefsiz yeteneklerde (ör. herkesi koru) boştur. */
+  targetId?: PlayerId;
   cause: DeathCause;
 };
 
 /** Bir çözümleme turu boyunca efektlerin paylaştığı durum. */
 export type EffectContext = {
   roleOf: (id: PlayerId) => string;
+  aliveIds: PlayerId[];
   protectedIds: Set<PlayerId>;
   deaths: Map<PlayerId, { cause: DeathCause; by?: PlayerId }>;
   events: GameEvent[];
@@ -29,12 +31,19 @@ export const EFFECTS: Record<EffectKind, EffectHandler> = {
   protect: {
     priority: 10,
     apply: (ctx, { targetId }) => {
-      ctx.protectedIds.add(targetId);
+      if (targetId) ctx.protectedIds.add(targetId);
+    },
+  },
+  protectAll: {
+    priority: 10,
+    apply: (ctx) => {
+      for (const id of ctx.aliveIds) ctx.protectedIds.add(id);
     },
   },
   kill: {
     priority: 20,
     apply: (ctx, { actorId, targetId, cause }) => {
+      if (!targetId) return;
       if (ctx.protectedIds.has(targetId)) {
         ctx.events.push({ type: 'saved', playerId: targetId });
         return;
@@ -45,6 +54,7 @@ export const EFFECTS: Record<EffectKind, EffectHandler> = {
   investigate: {
     priority: 30,
     apply: (ctx, { actorId, targetId }) => {
+      if (!targetId) return;
       const role = getRole(ctx.roleOf(targetId));
       ctx.events.push({
         type: 'investigated',

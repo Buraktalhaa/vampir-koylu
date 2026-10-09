@@ -1,9 +1,9 @@
 import type { RoleDefinition, TeamId } from '../types';
+import { avenger } from './avenger';
 import { healer } from './healer';
-import { hunter } from './hunter';
-import { seer } from './seer';
 import { vampire } from './vampire';
 import { villager } from './villager';
+import { witch } from './witch';
 
 /**
  * Yeni karakter eklemek için:
@@ -11,7 +11,7 @@ import { villager } from './villager';
  * 2. Bu listeye ekle
  * 3. `i18n/locales/*` içine adını ve açıklamasını yaz (eksikse TypeScript hata verir)
  */
-const ROLE_LIST = [villager, vampire, seer, healer, hunter] as const;
+const ROLE_LIST = [villager, vampire, witch, healer, avenger] as const;
 
 export type RoleId = (typeof ROLE_LIST)[number]['id'];
 

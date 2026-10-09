@@ -9,6 +9,7 @@ export const vampire = defineRole({
       id: 'bite',
       trigger: 'night',
       effect: 'kill',
+      cause: 'vampire',
       teamVote: true,
       target: { allowTeammates: false },
     },

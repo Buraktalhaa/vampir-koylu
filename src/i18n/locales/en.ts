@@ -14,22 +14,27 @@ export const en: Translation = {
     vampire: {
       name: 'Vampire',
       description: 'Each night you choose a victim together with the other vampires. You know your teammates.',
-      abilityPrompt: 'Who will you bite tonight?',
+      abilities: { bite: { name: 'Bite', prompt: 'Who will you bite tonight?' } },
     },
-    seer: {
-      name: 'Seer',
-      description: "Each night you learn one player's true role.",
-      abilityPrompt: 'Whose role do you want to see?',
+    witch: {
+      name: 'Witch',
+      description:
+        'You have two spells, each usable once. You can cast only one per night: protect everyone that night, or curse a player to death. Your curse fails on someone the Healer protects.',
+      abilities: {
+        shield: { name: 'Protective Shield', prompt: 'Protect the whole village tonight?' },
+        curse: { name: 'Death Curse', prompt: 'Who will you curse?' },
+      },
     },
     healer: {
       name: 'Healer',
-      description: 'Each night you protect one player from the vampires. You cannot protect the same person two nights in a row.',
-      abilityPrompt: 'Who will you protect tonight?',
+      description:
+        'Each night you protect one player, yourself included. You cannot protect the same person two nights in a row.',
+      abilities: { heal: { name: 'Heal', prompt: 'Who will you protect tonight?' } },
     },
-    hunter: {
-      name: 'Hunter',
-      description: 'When you die, you take one last shot and bring someone down with you.',
-      abilityPrompt: 'Who gets your last bullet?',
+    avenger: {
+      name: 'Avenger',
+      description: 'If the village hangs you, you take one more player down with you.',
+      abilities: { revenge: { name: 'Revenge', prompt: 'Who will you take with you?' } },
     },
   },
 };
