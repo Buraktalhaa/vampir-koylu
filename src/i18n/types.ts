@@ -53,6 +53,7 @@ export type Translation = {
     step: (current: number, total: number) => string;
     playerCount: (n: number) => string;
     savedFromLast: string;
+    reorderHint: string;
     clear: string;
     duplicate: string;
     needMore: (n: number) => string;
@@ -63,10 +64,9 @@ export type Translation = {
     issues: (n: number) => string;
     summaryTitle: string;
     summaryPlayers: string;
-    summaryVampires: string;
-    summaryRoles: string;
     summaryDiscussion: string;
-    randomMark: string;
+    min: string;
+    max: string;
     players: string;
     namePlaceholder: string;
     add: string;
@@ -82,6 +82,7 @@ export type Translation = {
       needVampire: string;
       tooManyVampires: (max: number) => string;
       unique: string;
+      badRange: string;
       minPlayers: (min: number) => string;
     };
   };

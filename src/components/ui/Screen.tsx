@@ -16,13 +16,15 @@ type Props = {
   phase?: Phase;
   /** Faz degradesi yerine özel arka plan (ör. ana menü görseli). */
   backdrop?: ReactNode;
+  /** Sürükle-bırak sırasında ekran kaymasın diye kapatılabilir. */
+  scrollEnabled?: boolean;
 };
 
-export function Screen({ title, children, footer, phase = DEFAULT_PHASE, backdrop }: Props) {
+export function Screen({ title, children, footer, phase = DEFAULT_PHASE, backdrop, scrollEnabled = true }: Props) {
   return (
     <SafeAreaView style={styles.root}>
       {backdrop ?? <PhaseBackdrop phase={phase} />}
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} scrollEnabled={scrollEnabled}>
         {title ? <AppText variant="h1">{title}</AppText> : null}
         {children}
       </ScrollView>

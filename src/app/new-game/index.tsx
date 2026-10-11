@@ -9,12 +9,15 @@ import { ErrorBox } from '@/components/ui/ErrorBox';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { Screen } from '@/components/ui/Screen';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { SortableGrid } from '@/components/ui/SortableGrid';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { useGame } from '@/store/GameProvider';
-import { colors, DEFAULT_PHASE, phases, radius, space, touch } from '@/theme/tokens';
+import { colors, DEFAULT_PHASE, phases, radius, space } from '@/theme/tokens';
 import { TextField } from '@/components/ui/TextField';
 
 const MIN_PLAYERS = 3;
+/** Oyuncu hücresi: 64 avatar + isim + boşluklar. */
+const PLAYER_CELL_HEIGHT = 116;
 const accent = phases[DEFAULT_PHASE];
 
 /** Türkçe büyük/küçük harf duyarsız karşılaştırma (İ/i, I/ı). */
@@ -28,6 +31,7 @@ export default function PlayersStep() {
   const [input, setInput] = useState('');
   const [triedNext, setTriedNext] = useState(false);
   const [duplicate, setDuplicate] = useState(false);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
   // Açılıştaki liste önceki oyundan geldiyse "kaydedildi" notu gösterilir.
   const [restored] = useState(() => names.length > 0);
   const inputRef = useRef<TextInput>(null);
@@ -49,6 +53,7 @@ export default function PlayersStep() {
 
   return (
     <Screen
+      scrollEnabled={scrollEnabled}
       footer={
         <>
           <ErrorBox errors={triedNext && missing > 0 ? [t.setup.needMore(missing)] : []} />
@@ -101,24 +106,40 @@ export default function PlayersStep() {
         </View>
       ) : null}
 
-      <View style={styles.list}>
-        {names.map((name) => (
-          <View key={name} style={styles.row}>
-            <PlayerAvatar name={name} size={28} />
-            <AppText variant="button" style={styles.flex} numberOfLines={1}>
+      {names.length > 1 ? (
+        <AppText variant="small" color={colors.text3}>
+          {t.setup.reorderHint}
+        </AppText>
+      ) : null}
+      <SortableGrid
+        data={names}
+        keyOf={(name) => name}
+        columns={3}
+        rowHeight={PLAYER_CELL_HEIGHT}
+        onReorder={(next) => updateDraft({ names: next })}
+        onDragChange={(dragging) => setScrollEnabled(!dragging)}
+        renderItem={(name, dragging) => (
+          <View style={styles.cell}>
+            <View>
+              <PlayerAvatar name={name} size={64} />
+              {dragging ? null : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${name} ×`}
+                  onPress={() => updateDraft({ names: names.filter((n) => n !== name) })}
+                  hitSlop={10}
+                  style={styles.remove}
+                >
+                  <X size={14} color={colors.text1} strokeWidth={2.5} />
+                </Pressable>
+              )}
+            </View>
+            <AppText variant="button" numberOfLines={1} style={styles.name}>
               {name}
             </AppText>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`${name} ×`}
-              onPress={() => updateDraft({ names: names.filter((n) => n !== name) })}
-              style={styles.remove}
-            >
-              <X size={18} color={colors.text3} />
-            </Pressable>
           </View>
-        ))}
-      </View>
+        )}
+      />
     </Screen>
   );
 }
@@ -136,17 +157,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   meta: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  list: { gap: 6 },
-  row: {
-    flexDirection: 'row',
+  // 3 sütun: yuvarlak avatar, altında isim, köşede ✕ (sil). Basılı tutup sürükleyerek sıralanır.
+  cell: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[2], paddingHorizontal: space[1] },
+  name: { maxWidth: '100%', textAlign: 'center' },
+  remove: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 26,
+    height: 26,
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    borderColor: colors.bg1,
+    backgroundColor: colors.surface3,
     alignItems: 'center',
-    gap: space[3],
-    minHeight: 52,
-    paddingLeft: space[3],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface1,
+    justifyContent: 'center',
   },
-  remove: { width: touch.min, height: touch.min, alignItems: 'center', justifyContent: 'center' },
 });
