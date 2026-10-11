@@ -2,10 +2,10 @@ import { View } from 'react-native';
 
 import { avatarColors, colors, radius } from '@/theme/tokens';
 
-import { AppText } from './AppText';
+import { AppText } from '@/components/ui/AppText';
 
 /** İsimden kararlı renk: aynı oyuncu her ekranda aynı renkte görünür. */
-export function avatarColor(name: string): string {
+function avatarColor(name: string): string {
   let hash = 0;
   for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
   return avatarColors[hash % avatarColors.length];

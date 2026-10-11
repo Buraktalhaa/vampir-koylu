@@ -2,9 +2,9 @@ import { router } from 'expo-router';
 import { Check } from 'lucide-react-native';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { AppText } from '@/components/AppText';
-import { Button } from '@/components/Button';
-import { Screen } from '@/components/Screen';
+import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
+import { Screen } from '@/components/ui/Screen';
 import { LOCALES, type Language } from '@/i18n';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { colors, DEFAULT_PHASE, phases, radius, space, touch } from '@/theme/tokens';

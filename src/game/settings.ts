@@ -23,5 +23,3 @@ export const DEFAULT_SETTINGS: GameSettings = {
   firstNightActions: false,
   discussionSeconds: 120,
 };
-
-export const VOTE_MODES: VoteMode[] = ['secret', 'open'];

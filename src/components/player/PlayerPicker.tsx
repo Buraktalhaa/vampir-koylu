@@ -4,8 +4,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import type { Phase, Player, PlayerId } from '@/game/types';
 import { colors, phases, radius, space } from '@/theme/tokens';
 
-import { AppText } from './AppText';
-import { PlayerAvatar } from './PlayerAvatar';
+import { AppText } from '@/components/ui/AppText';
+import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 
 export type PickerItem = {
   player: Player;

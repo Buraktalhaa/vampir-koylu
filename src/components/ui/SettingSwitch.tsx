@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { colors, DEFAULT_PHASE, phases, radius, space } from '@/theme/tokens';
 
-import { AppText } from './AppText';
+import { AppText } from '@/components/ui/AppText';
 
 type Props = {
   label: string;

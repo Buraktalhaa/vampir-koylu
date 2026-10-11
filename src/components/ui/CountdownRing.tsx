@@ -3,7 +3,7 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { colors, phases } from '@/theme/tokens';
 
-import { AppText } from './AppText';
+import { AppText } from '@/components/ui/AppText';
 
 type Props = { remaining: number; total: number; label: string; size?: number };
 

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import type { Phase } from '@/game/types';
 import { colors, DEFAULT_PHASE, phases, radius, space } from '@/theme/tokens';
 
-import { AppText } from './AppText';
+import { AppText } from '@/components/ui/AppText';
 
 type Props = {
   label: string;

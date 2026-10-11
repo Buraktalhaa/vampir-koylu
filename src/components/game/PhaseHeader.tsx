@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText } from '@/components/AppText';
+import { AppText } from '@/components/ui/AppText';
 import type { Phase } from '@/game/types';
 import { colors, phases, radius, space } from '@/theme/tokens';
 

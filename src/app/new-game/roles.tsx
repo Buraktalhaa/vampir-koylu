@@ -1,13 +1,12 @@
 import { router } from 'expo-router';
-import { Check, ChevronRight, CircleAlert, Dices, Minus, Plus } from 'lucide-react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Check, ChevronRight, CircleAlert, Dices } from 'lucide-react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { AppText } from '@/components/AppText';
-import { Button } from '@/components/Button';
-import { RolePortrait } from '@/components/RolePortrait';
-import { Screen } from '@/components/Screen';
-import { ScreenHeader } from '@/components/ScreenHeader';
-import { TeamBadge } from '@/components/TeamBadge';
+import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
+import { Screen } from '@/components/ui/Screen';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { RoleSlotCard } from '@/components/setup/RoleSlotCard';
 import {
   allRandomSetup,
   maxVampires,
@@ -18,11 +17,10 @@ import {
   type RoleSetup,
   type SetupError,
 } from '@/game';
-import type { Translation } from '@/i18n/locales/tr';
+import type { Translation } from '@/i18n/types';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { useGame } from '@/store/GameProvider';
-import { TEAM_VISUALS } from '@/theme/teams';
-import { colors, radius, space, touch } from '@/theme/tokens';
+import { colors, radius, space } from '@/theme/tokens';
 
 function errorText(t: Translation, e: SetupError): string {
   switch (e.code) {
@@ -52,10 +50,6 @@ export default function RolesStep() {
   const players = names.length;
 
   const setSlot = (id: RoleId, slot: RoleSetup[RoleId]) => updateDraft({ setup: { ...setup, [id]: slot } });
-  const step = (id: RoleId, delta: number) => {
-    const current = setup[id];
-    setSlot(id, Math.max(0, (typeof current === 'number' ? current : 0) + delta) || undefined);
-  };
 
   const errors = validateSetup(players, setup);
   const fixed = Object.values(setup).reduce<number>((sum, s) => sum + (typeof s === 'number' ? s : 0), 0);
@@ -108,71 +102,19 @@ export default function RolesStep() {
 
       <Button label={t.setup.allRandom} variant="secondary" icon={Dices} onPress={() => updateDraft({ setup: allRandomSetup() })} />
 
-      {ROLE_IDS.map((id) => {
-        const slot = setup[id];
-        const role = ROLES[id];
-        const { line } = TEAM_VISUALS[role.team];
-        const rowError = errors.find((e) => errorRole(e) === id);
-        const isRandom = slot === 'random';
-        const isNone = slot === undefined;
-        const count = typeof slot === 'number' ? slot : 0;
-        const plusDisabled = id === 'vampire' && count >= maxVampires(players);
-        return (
-          <View key={id} style={styles.roleBlock}>
-            <View style={[styles.roleCard, { borderColor: rowError ? colors.danger.fg : line }]}>
-              <View style={styles.roleHead}>
-                <RolePortrait roleId={id} size={44} />
-                <View style={styles.roleText}>
-                  <AppText variant="button">{t.roles[id].name}</AppText>
-                  <TeamBadge team={role.team} />
-                </View>
-              </View>
-              <View style={[styles.segment, rowError && styles.segmentError]}>
-                <Pressable
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: isNone }}
-                  onPress={() => setSlot(id, undefined)}
-                  style={[styles.segBtn, styles.segNone, isNone && styles.segOn]}
-                >
-                  <AppText variant="small" color={isNone ? colors.text1 : colors.text2}>
-                    {t.setup.none}
-                  </AppText>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: isRandom }}
-                  onPress={() => setSlot(id, 'random')}
-                  style={[styles.segBtn, styles.segRandom, isRandom && styles.segOn]}
-                >
-                  <Dices size={14} color={isRandom ? colors.text1 : colors.text2} />
-                  <AppText variant="small" color={isRandom ? colors.text1 : colors.text2}>
-                    {t.setup.random}
-                  </AppText>
-                </Pressable>
-                <View style={styles.counter}>
-                  <Pressable accessibilityRole="button" accessibilityLabel="−" disabled={count === 0} onPress={() => step(id, -1)} style={styles.counterBtn}>
-                    <Minus size={16} color={count === 0 ? colors.text3 : colors.text1} />
-                  </Pressable>
-                  <AppText variant="h3" color={rowError ? colors.danger.fg : isRandom ? colors.text3 : colors.text1} style={styles.counterValue}>
-                    {isRandom ? '–' : count}
-                  </AppText>
-                  <Pressable accessibilityRole="button" accessibilityLabel="+" disabled={plusDisabled} onPress={() => step(id, 1)} style={styles.counterBtn}>
-                    <Plus size={16} color={plusDisabled ? colors.text3 : colors.text1} />
-                  </Pressable>
-                </View>
-              </View>
-            </View>
-            {rowError ? (
-              <View style={styles.rowError}>
-                <CircleAlert size={14} color={colors.danger.fg} />
-                <AppText variant="small" color={colors.danger.fg}>
-                  {errorText(t, rowError)}
-                </AppText>
-              </View>
-            ) : null}
+      <View style={styles.grid}>
+        {ROLE_IDS.map((id) => (
+          <View key={id} style={styles.cell}>
+            <RoleSlotCard
+              roleId={id}
+              slot={setup[id]}
+              onChange={(slot) => setSlot(id, slot)}
+              maxReached={id === 'vampire' && typeof setup.vampire === 'number' && setup.vampire >= maxVampires(players)}
+              error={errors.some((e) => errorRole(e) === id)}
+            />
           </View>
-        );
-      })}
+        ))}
+      </View>
     </Screen>
   );
 }
@@ -183,28 +125,6 @@ const styles = StyleSheet.create({
   summaryOk: { borderColor: colors.success.fg, backgroundColor: colors.success.bg },
   summaryError: { borderColor: colors.danger.fill, backgroundColor: colors.team.vampire.bg },
   summaryRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  roleBlock: { gap: space[2] },
-  roleCard: { gap: space[3], padding: 10, borderRadius: radius.lg - 4, borderWidth: 1, backgroundColor: colors.surface1 },
-  roleHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-  roleText: { flex: 1, gap: space[1] },
-  segment: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: touch.min,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.lineStrong,
-    backgroundColor: colors.bg1,
-    overflow: 'hidden',
-  },
-  segmentError: { borderColor: colors.danger.fg },
-  segBtn: { height: '100%', flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center' },
-  segNone: { width: 56 },
-  segRandom: { width: 104 },
-  segOn: { backgroundColor: colors.surface3 },
-  counter: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  counterBtn: { width: touch.min, height: touch.min, alignItems: 'center', justifyContent: 'center' },
-  counterValue: { minWidth: 24, textAlign: 'center', fontVariant: ['tabular-nums'] },
-  rowError: { flexDirection: 'row', alignItems: 'center', gap: space[1], paddingHorizontal: space[1] },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
+  cell: { width: '50%', padding: 5 },
 });
-

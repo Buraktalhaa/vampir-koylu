@@ -2,6 +2,7 @@ import { getRole } from '../roles';
 import { checkWinner, teamOf } from '../teams';
 import type {
   ActionSubmission,
+  DeathEvent,
   EventBody,
   GameEvent,
   GameState,
@@ -145,6 +146,18 @@ export function resolveNight(
     ctx.deaths,
   );
   return { ...next, phase: 'day' };
+}
+
+/** Belirli bir olaydan sonraki ölümler (sabah raporu, oylama sonucu). */
+export function deathsSince(state: GameState, from: number): DeathEvent[] {
+  return state.events.slice(from).filter((e): e is DeathEvent => e.type === 'death');
+}
+
+/** Gizli oyları (kim → kime) oy sayısına çevirir. */
+export function countVotes(votes: Record<PlayerId, PlayerId>): Record<PlayerId, number> {
+  const tally: Record<PlayerId, number> = {};
+  for (const target of Object.values(votes)) tally[target] = (tally[target] ?? 0) + 1;
+  return tally;
 }
 
 /** Gece hiç oynanmadan gündüze geçer (ör. ilk gece yetenekler kapalıysa). */

@@ -1,6 +1,6 @@
 import type { Ability } from '@/game/types';
 
-import type { Translation } from './locales/tr';
+import type { Translation } from './types';
 
 /** Yetenek etiketleri kurallardan üretilir; yeni yetenek için ayrıca metin yazmak gerekmez. */
 export function abilityTags(ability: Ability, t: Translation): string[] {

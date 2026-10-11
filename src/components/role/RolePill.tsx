@@ -1,9 +1,9 @@
 import { StyleSheet, View } from 'react-native';
 
-import { AppText } from '@/components/AppText';
-import { RolePortrait } from '@/components/RolePortrait';
-import { TeamBadge } from '@/components/TeamBadge';
-import { ROLES, type RoleId } from '@/game/roles';
+import { AppText } from '@/components/ui/AppText';
+import { RolePortrait } from '@/components/role/RolePortrait';
+import { TeamBadge } from '@/components/role/TeamBadge';
+import { type RoleId, ROLES } from '@/game/roles';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { colors, radius, space } from '@/theme/tokens';
 

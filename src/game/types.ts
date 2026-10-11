@@ -94,6 +94,8 @@ export type EventBody =
 /** Her olay hangi tur ve fazda olduğunu taşır. */
 export type GameEvent = EventBody & { round: number; phase: Phase };
 
+export type DeathEvent = Extract<GameEvent, { type: 'death' }>;
+
 /** Tetiklendiği tur/faz saklanır; olaylar oraya yazılır (ör. asılan İntikamcı'nın atışı gündüze ait). */
 export type PendingTrigger = { actorId: PlayerId; abilityId: string; round: number; phase: Phase };
 

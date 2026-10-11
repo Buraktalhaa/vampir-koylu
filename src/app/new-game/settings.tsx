@@ -2,11 +2,11 @@ import { router } from 'expo-router';
 import { Moon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText } from '@/components/AppText';
-import { Button } from '@/components/Button';
-import { Screen } from '@/components/Screen';
-import { ScreenHeader } from '@/components/ScreenHeader';
-import { SettingSwitch } from '@/components/SettingSwitch';
+import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
+import { Screen } from '@/components/ui/Screen';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { SettingSwitch } from '@/components/ui/SettingSwitch';
 import { createGame, ROLE_IDS } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { useGame } from '@/store/GameProvider';

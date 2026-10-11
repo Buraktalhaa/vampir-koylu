@@ -1,12 +1,12 @@
 import { Flame } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText } from '@/components/AppText';
-import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { AppText } from '@/components/ui/AppText';
+import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import type { RoleId } from '@/game/roles';
 import { colors, phases, radius, space } from '@/theme/tokens';
 
-import { RolePill } from './RolePill';
+import { RolePill } from '@/components/role/RolePill';
 
 type Props = {
   name: string;
