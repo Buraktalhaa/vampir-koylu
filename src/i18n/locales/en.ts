@@ -65,7 +65,7 @@ export const en: Translation = {
       abilities: { revenge: { name: 'Revenge', prompt: 'Who will you take with you?', description: 'If the village hangs you, you take one more player down with you.' } },
     },
   },
-  menu: { resume: 'Resume game', newGame: 'New Game', roles: 'Characters', settings: 'Settings', howToPlay: 'How to Play' },
+  menu: { tagline: 'Someone in the village is a vampire. Find them.', resume: 'Resume game', newGame: 'New Game', roles: 'Characters', settings: 'Settings', howToPlay: 'How to Play' },
   appSettings: { title: 'Settings', language: 'Language' },
   encyclopedia: {
     title: 'Characters',

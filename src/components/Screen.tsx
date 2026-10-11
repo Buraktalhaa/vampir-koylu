@@ -14,12 +14,14 @@ type Props = {
   /** Alt kısma sabitlenen aksiyonlar (tek elle kullanım). */
   footer?: ReactNode;
   phase?: Phase;
+  /** Faz degradesi yerine özel arka plan (ör. ana menü görseli). */
+  backdrop?: ReactNode;
 };
 
-export function Screen({ title, children, footer, phase = DEFAULT_PHASE }: Props) {
+export function Screen({ title, children, footer, phase = DEFAULT_PHASE, backdrop }: Props) {
   return (
     <SafeAreaView style={styles.root}>
-      <PhaseBackdrop phase={phase} />
+      {backdrop ?? <PhaseBackdrop phase={phase} />}
       <ScrollView contentContainerStyle={styles.content}>
         {title ? <AppText variant="h1">{title}</AppText> : null}
         {children}

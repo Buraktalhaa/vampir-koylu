@@ -23,7 +23,7 @@ export type Translation = {
   teams: Record<TeamId, { name: string; goal: string }>;
   roles: Record<RoleId, RoleText>;
   quiz: QuizItem[];
-  menu: { resume: string; newGame: string; roles: string; settings: string; howToPlay: string };
+  menu: { tagline: string; resume: string; newGame: string; roles: string; settings: string; howToPlay: string };
   appSettings: { title: string; language: string };
   encyclopedia: {
     title: string;
@@ -267,7 +267,7 @@ export const tr: Translation = {
       abilities: { revenge: { name: 'İntikam', prompt: 'Yanında kimi götüreceksin?', description: 'Köy seni asarsa yanında bir oyuncuyu daha götürürsün.' } },
     },
   },
-  menu: { resume: 'Devam eden oyuna dön', newGame: 'Yeni Oyun', roles: 'Karakterler', settings: 'Ayarlar', howToPlay: 'Nasıl Oynanır' },
+  menu: { tagline: 'Köyde biri vampir. Kim olduğunu bulun.', resume: 'Devam eden oyuna dön', newGame: 'Yeni Oyun', roles: 'Karakterler', settings: 'Ayarlar', howToPlay: 'Nasıl Oynanır' },
   appSettings: { title: 'Ayarlar', language: 'Dil' },
   encyclopedia: {
     title: 'Karakterler',
