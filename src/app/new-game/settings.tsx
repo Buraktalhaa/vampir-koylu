@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SettingSwitch } from '@/components/ui/SettingSwitch';
-import { createGame, ROLE_IDS } from '@/game';
+import { createGame } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { useGame } from '@/store/GameProvider';
 import { colors, radius, space } from '@/theme/tokens';
@@ -29,10 +29,6 @@ export default function SettingsStep() {
     router.replace('/game');
   };
 
-  const vampires = setup.vampire === 'random' ? t.setup.randomMark : String(setup.vampire ?? 0);
-  const roles = ROLE_IDS.filter((id) => id !== 'vampire' && setup[id] !== undefined)
-    .map((id) => (setup[id] === 'random' ? `${t.roles[id].name} (${t.setup.randomMark})` : `${t.roles[id].name} ×${setup[id]}`))
-    .join(', ');
 
   return (
     <Screen footer={<Button label={t.setup.start} icon={Moon} onPress={start} />}>
@@ -68,8 +64,6 @@ export default function SettingsStep() {
       </AppText>
       <View style={[styles.group, styles.summary]}>
         <SummaryRow label={t.setup.summaryPlayers} value={String(names.length)} />
-        <SummaryRow label={t.setup.summaryVampires} value={vampires} />
-        {roles ? <SummaryRow label={t.setup.summaryRoles} value={roles} /> : null}
         <SummaryRow label={t.setup.summaryDiscussion} value={formatTime(settings.discussionSeconds)} />
       </View>
     </Screen>

@@ -10,8 +10,9 @@ import { RoleSlotCard } from '@/components/setup/RoleSlotCard';
 import {
   allRandomSetup,
   maxVampires,
+  randomRange,
+  reservedSlots,
   ROLE_IDS,
-  ROLES,
   validateSetup,
   type RoleId,
   type RoleSetup,
@@ -30,6 +31,8 @@ function errorText(t: Translation, e: SetupError): string {
       return `${t.roles[e.roleId].name}: ${t.setup.errors.minPlayers(e.min)}`;
     case 'unique':
       return `${t.roles[e.roleId].name}: ${t.setup.errors.unique}`;
+    case 'badRange':
+      return `${t.roles[e.roleId].name}: ${t.setup.errors.badRange}`;
     default:
       return t.setup.errors[e.code];
   }
@@ -38,7 +41,7 @@ function errorText(t: Translation, e: SetupError): string {
 /** Hata hangi satıra ait? (satır kırmızı kenarlık alır) */
 function errorRole(e: SetupError): RoleId | undefined {
   if (e.code === 'tooManyVampires' || e.code === 'needVampire') return 'vampire';
-  if (e.code === 'minPlayers' || e.code === 'unique') return e.roleId;
+  if (e.code === 'minPlayers' || e.code === 'unique' || e.code === 'badRange') return e.roleId;
   return undefined;
 }
 
@@ -53,7 +56,7 @@ export default function RolesStep() {
 
   const errors = validateSetup(players, setup);
   const fixed = Object.values(setup).reduce<number>((sum, s) => sum + (typeof s === 'number' ? s : 0), 0);
-  const randomCount = Object.values(setup).filter((s) => s === 'random').length;
+  const randomCount = Object.values(setup).filter((s) => randomRange(s) !== null).length;
   const shown = errors.some((e) => e.code === 'tooManyRoles') || randomCount === 0 ? fixed : players;
 
   return (
@@ -109,7 +112,9 @@ export default function RolesStep() {
               roleId={id}
               slot={setup[id]}
               onChange={(slot) => setSlot(id, slot)}
-              maxReached={id === 'vampire' && typeof setup.vampire === 'number' && setup.vampire >= maxVampires(players)}
+              players={players}
+              full={reservedSlots(players, setup) >= players}
+              limit={id === 'vampire' ? maxVampires(players) : players}
               error={errors.some((e) => errorRole(e) === id)}
             />
           </View>
