@@ -4,17 +4,24 @@ import { colors, DEFAULT_PHASE, phases, radius, space } from '@/theme/tokens';
 
 import { AppText } from './AppText';
 
-type Props = { label: string; hint?: string; value: boolean; onChange: (value: boolean) => void };
+type Props = {
+  label: string;
+  hint?: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+  /** Grup kartının içinde: kendi kenarlığı olmadan. */
+  bare?: boolean;
+};
 
 /** Ayar satırı: başlık + açıklama + sağa sola kaydırılan anahtar. Satırın tamamı dokunulabilir. */
-export function SettingSwitch({ label, hint, value, onChange }: Props) {
+export function SettingSwitch({ label, hint, value, onChange, bare }: Props) {
   const { accent } = phases[DEFAULT_PHASE];
   return (
     <Pressable
       accessibilityRole="switch"
       accessibilityState={{ checked: value }}
       onPress={() => onChange(!value)}
-      style={styles.row}
+      style={[styles.row, bare && styles.bare]}
     >
       <View style={styles.text}>
         <AppText variant="button">{label}</AppText>
@@ -46,5 +53,6 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     backgroundColor: colors.surface1,
   },
+  bare: { borderWidth: 0, borderRadius: 0, minHeight: 64 },
   text: { flex: 1, gap: space[1] },
 });

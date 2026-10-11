@@ -11,6 +11,7 @@ export const vampire = defineRole({
       effect: 'kill',
       cause: 'vampire',
       teamVote: true,
+      required: true,
       target: { allowTeammates: false },
     },
   ],

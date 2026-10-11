@@ -33,6 +33,9 @@ export const colors = {
   info: { fg: '#8DB8FF', bg: '#141F3A' }, // korunmuş durumu da bu renk
 } as const;
 
+/** Oyuncu avatar renkleri (isimden kararlı şekilde seçilir; takım bilgisi taşımaz). */
+export const avatarColors = ['#A9B8F5', '#F0A6CF', '#B5E5A4', '#9EDDE6', '#F5B38F', '#D9C3A0', '#F2DE8F', '#CDB8F2'] as const;
+
 type PhaseTheme = {
   sky: string;
   deep: string;
