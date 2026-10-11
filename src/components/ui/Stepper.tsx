@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { colors, radius, touch } from '@/theme/tokens';
 
-import { AppText } from './AppText';
+import { AppText } from '@/components/ui/AppText';
 
 type Props = {
   value: string;

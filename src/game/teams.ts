@@ -6,6 +6,11 @@ export function teamOf(player: Player): TeamId {
 }
 
 /** Hayattaki oyuncular, oturma sırasıyla. Telefon sadece bunlar arasında dolaşır. */
+/** Takımını tanıyan oyuncu (ör. vampir) için: diğer oyuncu takım arkadaşı mı? */
+export function isKnownTeammate(viewer: Player, other: Player): boolean {
+  return other.id !== viewer.id && getRole(viewer.roleId).knowsTeammates === true && teamOf(other) === teamOf(viewer);
+}
+
 export function alivePlayers(state: GameState): Player[] {
   return state.players.filter((p) => p.alive);
 }

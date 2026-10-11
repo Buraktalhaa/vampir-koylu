@@ -1,19 +1,20 @@
 import { router } from 'expo-router';
-import { Search, X } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText } from '@/components/AppText';
-import { Button } from '@/components/Button';
-import { RoleCard } from '@/components/RoleCard';
-import { Screen } from '@/components/Screen';
-import { CountBadge, ScreenHeader } from '@/components/ScreenHeader';
+import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
+import { RoleCard } from '@/components/role/RoleCard';
+import { Screen } from '@/components/ui/Screen';
+import { CountBadge, ScreenHeader } from '@/components/ui/ScreenHeader';
 import { ROLE_IDS, ROLES, type RoleId } from '@/game/roles';
 import type { TeamId } from '@/game/types';
-import type { Translation } from '@/i18n/locales/tr';
+import type { Translation } from '@/i18n/types';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { TEAM_VISUALS } from '@/theme/teams';
-import { colors, fonts, MAX_FONT_SCALE, radius, space } from '@/theme/tokens';
+import { colors, radius, space } from '@/theme/tokens';
+import { TextField } from '@/components/ui/TextField';
 
 type Filter = TeamId | 'all';
 const TEAMS: TeamId[] = ['village', 'vampire'];
@@ -46,21 +47,14 @@ export default function Encyclopedia() {
   return (
     <Screen>
       <ScreenHeader title={t.encyclopedia.title} right={<CountBadge value={visible.length} />} />
-      <View style={styles.search}>
-        <Search size={18} color={colors.text3} />
-        <TextInput
+      <View style={styles.searchRow}>
+        <TextField
+          icon={Search}
           value={query}
           onChangeText={setQuery}
+          onClear={() => setQuery('')}
           placeholder={t.encyclopedia.search}
-          placeholderTextColor={colors.text3}
-          maxFontSizeMultiplier={MAX_FONT_SCALE}
-          style={styles.searchInput}
         />
-        {query ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="×" onPress={() => setQuery('')} hitSlop={8}>
-            <X size={18} color={colors.text2} />
-          </Pressable>
-        ) : null}
       </View>
       <View style={styles.tabs}>
         {(['all', ...TEAMS] as Filter[]).map((f) => {
@@ -126,18 +120,7 @@ export default function Encyclopedia() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
-  search: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    height: 52,
-    paddingHorizontal: space[4],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.lineStrong,
-    backgroundColor: colors.surface1,
-  },
-  searchInput: { flex: 1, height: '100%', color: colors.text1, fontFamily: fonts.body, fontSize: 16 },
+  searchRow: { flexDirection: 'row' },
   tabs: {
     flexDirection: 'row',
     gap: 4,

@@ -1,0 +1,136 @@
+import * as Haptics from 'expo-haptics';
+import { Info, Moon, Plus, SkipForward, Sun, Timer, Vote } from 'lucide-react-native';
+import { type ReactNode, useState } from 'react';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
+
+import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
+import { CountdownRing } from '@/components/ui/CountdownRing';
+import { PlayerPicker } from '@/components/player/PlayerPicker';
+import { Screen } from '@/components/ui/Screen';
+import { PhaseHeader } from '@/components/game/PhaseHeader';
+import { alivePlayers, type GameState } from '@/game';
+import { useCountdown } from '@/hooks/useCountdown';
+import { useLanguage } from '@/i18n/LanguageProvider';
+import { colors, phases, radius, space } from '@/theme/tokens';
+
+import { ActionBar } from '@/components/ui/ActionBar';
+import { InfoBand } from '@/components/ui/InfoBand';
+
+/** Tartışma süresi bitince oylamaya geçmeden önceki kısa geri sayım. */
+const AUTO_VOTE_SECONDS = 3;
+
+type DiscussionProps = {
+  game: GameState;
+  /** false: oylamasız gün (1. gün tanışma) — süre bitince doğrudan geceye geçilir. */
+  voteToday: boolean;
+  onVote: () => void;
+  onNight: () => void;
+};
+
+export function Discussion({ game, voteToday, onVote, onNight }: DiscussionProps) {
+  const { t } = useLanguage();
+  const [timeUp, setTimeUp] = useState(false);
+  const { remaining, total, addSeconds } = useCountdown(game.settings.discussionSeconds, () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    if (voteToday) setTimeUp(true);
+    else onNight();
+  });
+  const alive = alivePlayers(game).length;
+  const dead = game.players.length - alive;
+
+  const confirmSkip = () =>
+    Alert.alert(t.game.skipVoteTitle, t.game.skipVoteMessage, [
+      { text: t.game.cancel, style: 'cancel' },
+      { text: t.game.skipVote, onPress: onNight },
+    ]);
+
+  let footer: ReactNode;
+  if (!voteToday) {
+    footer = (
+      <ActionBar
+        secondary={<Button label={t.game.addTime} variant="secondary" icon={Plus} onPress={() => addSeconds(60)} />}
+        primary={<Button label={t.game.toNight} phase="day" icon={Moon} onPress={onNight} />}
+      />
+    );
+  } else if (timeUp) {
+    footer = (
+      <>
+        <AutoVoteBand
+          onAddMinute={() => {
+            setTimeUp(false);
+            addSeconds(60);
+          }}
+          onElapsed={onVote}
+        />
+        <Button label={t.game.startNow} phase="day" icon={Vote} onPress={onVote} />
+      </>
+    );
+  } else {
+    footer = (
+      <>
+        <View style={styles.actionBar}>
+          <View style={styles.flex1}>
+            <Button label={t.game.addTime} variant="secondary" icon={Plus} onPress={() => addSeconds(60)} />
+          </View>
+          <View style={styles.flex1}>
+            <Button label={t.game.skipVote} variant="secondary" icon={SkipForward} onPress={confirmSkip} />
+          </View>
+        </View>
+        <Button label={t.game.toVote} phase="day" icon={Vote} onPress={onVote} />
+      </>
+    );
+  }
+
+  return (
+    <Screen phase="day" footer={footer}>
+      <PhaseHeader icon={Sun} phase="day" title={t.game.day(game.round)} subtitle={voteToday ? t.game.discussSub(alive) : t.game.introSub} />
+      <CountdownRing remaining={remaining} total={total} label={remaining > 0 ? t.game.remaining : t.game.timeUp} />
+      {!voteToday ? <InfoBand icon={Info} text={t.game.introInfo} /> : null}
+      <View style={styles.sectionHead}>
+        <AppText variant="caption" color={colors.text3}>
+          {t.game.playersLabel.toLocaleUpperCase('tr')}
+        </AppText>
+        <AppText variant="small" color={colors.text3}>
+          {t.game.aliveDead(alive, dead)}
+        </AppText>
+      </View>
+      <PlayerPicker items={game.players.map((player) => ({ player }))} phase="day" columns={4} />
+    </Screen>
+  );
+}
+
+/** Süre doldu bandı: birkaç saniye sonra oylama kendiliğinden başlar, "+1 dk" ile ertelenebilir. */
+function AutoVoteBand({ onAddMinute, onElapsed }: { onAddMinute: () => void; onElapsed: () => void }) {
+  const { t } = useLanguage();
+  const { remaining } = useCountdown(AUTO_VOTE_SECONDS, onElapsed);
+  return (
+    <View style={styles.autoBand}>
+      <Timer size={18} color={phases.day.accent} />
+      <AppText variant="small" style={styles.flex1}>
+        {t.game.autoVote(remaining)}
+      </AppText>
+      <Pressable accessibilityRole="button" onPress={onAddMinute} hitSlop={8}>
+        <AppText variant="button" color={phases.day.accent}>
+          {t.game.addTime}
+        </AppText>
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex1: { flex: 1 },
+  actionBar: { flexDirection: 'row', gap: 10 },
+  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  autoBand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    padding: space[3],
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.lineStrong,
+    backgroundColor: colors.surface2,
+  },
+});

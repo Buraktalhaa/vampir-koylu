@@ -5,7 +5,7 @@ import { useLanguage } from '@/i18n/LanguageProvider';
 import { TEAM_VISUALS } from '@/theme/teams';
 import { radius, space } from '@/theme/tokens';
 
-import { AppText } from './AppText';
+import { AppText } from '@/components/ui/AppText';
 
 /** Takım etiketi: sembol + renk + metin. */
 export function TeamBadge({ team }: { team: TeamId }) {

@@ -6,7 +6,7 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import type { Phase } from '@/game/types';
 import { colors, DEFAULT_PHASE, gutter, phases, space } from '@/theme/tokens';
 
-import { AppText } from './AppText';
+import { AppText } from '@/components/ui/AppText';
 
 type Props = {
   title?: string;

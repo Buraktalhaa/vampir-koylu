@@ -1,4 +1,4 @@
-import type { RoleDefinition, TeamId } from '../types';
+import type { RoleDefinition } from '../types';
 import { avenger } from './avenger';
 import { healer } from './healer';
 import { vampire } from './vampire';
@@ -25,8 +25,4 @@ export function getRole(id: string): RoleDefinition {
   const role = (ROLES as Record<string, RoleDefinition>)[id];
   if (!role) throw new Error(`Unknown role: ${id}`);
   return role;
-}
-
-export function rolesOfTeam(team: TeamId): RoleId[] {
-  return ROLE_IDS.filter((id) => ROLES[id].team === team);
 }

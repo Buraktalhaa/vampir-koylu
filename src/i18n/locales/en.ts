@@ -1,4 +1,4 @@
-import type { Translation } from './tr';
+import type { Translation } from '../types';
 
 export const en: Translation = {
   languageName: 'English',
@@ -31,7 +31,7 @@ export const en: Translation = {
   roles: {
     villager: {
       name: 'Villager',
-      tip: "You have no role, why are you looking here? Listen during the day and vote for whoever you suspect. That's it.",
+      tip: "You have no role. Keep hanging out in the fields.",
       description: 'No special power. Debate during the day and vote out who you suspect.',
     },
     vampire: {
@@ -65,7 +65,7 @@ export const en: Translation = {
       abilities: { revenge: { name: 'Revenge', prompt: 'Who will you take with you?', description: 'If the village hangs you, you take one more player down with you.' } },
     },
   },
-  menu: { tagline: 'Someone in the village is a vampire. Find them.', resume: 'Resume game', newGame: 'New Game', roles: 'Characters', settings: 'Settings', howToPlay: 'How to Play' },
+  menu: { tagline: 'Strange things are happening in this village…', resume: 'Resume game', newGame: 'New Game', roles: 'Characters', settings: 'Settings' },
   appSettings: { title: 'Settings', language: 'Language' },
   encyclopedia: {
     title: 'Characters',
@@ -89,7 +89,7 @@ export const en: Translation = {
     noRepeat: 'No repeat target',
     effects: { protect: 'Protection', protectAll: 'Protection', kill: 'Kill', investigate: 'Info' },
   },
-  common: { back: 'Back', comingSoon: 'Coming soon' },
+  common: { back: 'Back' },
   setup: {
     step: (current, total) => `Setup ${current} / ${total}`,
     playerCount: (n) => `${n} players`,
@@ -114,7 +114,6 @@ export const en: Translation = {
     roles: 'Characters',
     random: 'Random',
     allRandom: 'All Random',
-    summary: (players, roles) => `${players} players · ${roles} fixed roles`,
     start: 'Start Game',
     next: 'Next',
     secretVote: {
@@ -122,7 +121,6 @@ export const en: Translation = {
       hint: 'On: the phone is passed around and everyone votes privately. Off: the phone stays in the middle and vote counts are entered.',
     },
     errors: {
-      minPlayers3: 'At least 3 players are needed.',
       tooManyRoles: 'There are more roles than players.',
       notEnoughRoles: 'No random characters left to fill the remaining slots.',
       needVampire: 'There must be at least 1 vampire.',

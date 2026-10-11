@@ -3,15 +3,16 @@ import { ChevronRight, Plus, X } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { AppText } from '@/components/AppText';
-import { Button } from '@/components/Button';
-import { ErrorBox } from '@/components/ErrorBox';
-import { PlayerAvatar } from '@/components/PlayerAvatar';
-import { Screen } from '@/components/Screen';
-import { ScreenHeader } from '@/components/ScreenHeader';
+import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
+import { ErrorBox } from '@/components/ui/ErrorBox';
+import { PlayerAvatar } from '@/components/player/PlayerAvatar';
+import { Screen } from '@/components/ui/Screen';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { useGame } from '@/store/GameProvider';
-import { colors, DEFAULT_PHASE, fonts, MAX_FONT_SCALE, phases, radius, space, touch } from '@/theme/tokens';
+import { colors, DEFAULT_PHASE, phases, radius, space, touch } from '@/theme/tokens';
+import { TextField } from '@/components/ui/TextField';
 
 const MIN_PLAYERS = 3;
 const accent = phases[DEFAULT_PHASE];
@@ -61,7 +62,7 @@ export default function PlayersStep() {
     >
       <ScreenHeader title={t.setup.players} step={[1, 3]} stepLabel={t.setup.step(1, 3)} />
       <View style={styles.inputRow}>
-        <TextInput
+        <TextField
           ref={inputRef}
           value={input}
           onChangeText={(v) => {
@@ -70,11 +71,9 @@ export default function PlayersStep() {
           }}
           onSubmitEditing={addName}
           placeholder={t.setup.namePlaceholder}
-          placeholderTextColor={colors.text3}
           returnKeyType="done"
           submitBehavior="submit"
-          maxFontSizeMultiplier={MAX_FONT_SCALE}
-          style={[styles.input, duplicate && styles.inputError]}
+          error={duplicate}
         />
         <Pressable accessibilityRole="button" accessibilityLabel={t.setup.add} onPress={addName} style={styles.addBtn}>
           <Plus size={24} color={colors.textInverse} />
@@ -128,19 +127,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   bold: { fontWeight: '700', color: colors.text1 },
   inputRow: { flexDirection: 'row', gap: space[2] },
-  input: {
-    flex: 1,
-    height: 52,
-    paddingHorizontal: space[4],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.lineStrong,
-    backgroundColor: colors.surface1,
-    color: colors.text1,
-    fontFamily: fonts.body,
-    fontSize: 16,
-  },
-  inputError: { borderColor: colors.danger.fg },
   addBtn: {
     width: 52,
     height: 52,

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
-import { nightSceneXml, SCENE_COUNT } from './nightScenes';
+import { nightSceneXml, SCENE_COUNT } from '@/components/art/nightScenes';
 
 /** Rastgele bir gece manzarası. Her yeni ekranda (yeni key ile) farklı sahne gelebilir. */
 export function NightScene({ style }: { style?: StyleProp<ViewStyle> }) {

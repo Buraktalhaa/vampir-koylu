@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { colors, DEFAULT_PHASE, phases, radius, space, touch } from '@/theme/tokens';
 
-import { AppText } from './AppText';
+import { AppText } from '@/components/ui/AppText';
 
 type Props = {
   title: string;

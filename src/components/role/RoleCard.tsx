@@ -5,8 +5,8 @@ import { useLanguage } from '@/i18n/LanguageProvider';
 import { TEAM_VISUALS } from '@/theme/teams';
 import { colors, radius, space } from '@/theme/tokens';
 
-import { AppText } from './AppText';
-import { RolePortrait } from './RolePortrait';
+import { AppText } from '@/components/ui/AppText';
+import { RolePortrait } from '@/components/role/RolePortrait';
 
 type Props = {
   roleId: RoleId;

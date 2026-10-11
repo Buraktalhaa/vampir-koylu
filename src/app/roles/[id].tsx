@@ -2,14 +2,15 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, Search, Shield, Skull, Sparkles } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText } from '@/components/AppText';
-import { RoleCard } from '@/components/RoleCard';
-import { Screen } from '@/components/Screen';
+import { AppText } from '@/components/ui/AppText';
+import { RoleCard } from '@/components/role/RoleCard';
+import { Screen } from '@/components/ui/Screen';
 import { ROLE_IDS, ROLES, type RoleId } from '@/game/roles';
 import type { EffectKind } from '@/game/types';
 import { abilityTags } from '@/i18n/abilityTags';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { colors, radius, space, touch } from '@/theme/tokens';
+import { Chip, ChipRow } from '@/components/ui/Chip';
 
 const EFFECT_ICON: Record<EffectKind, { icon: typeof Shield; fg: string; bg: string }> = {
   protect: { icon: Shield, fg: colors.info.fg, bg: colors.info.bg },
@@ -47,13 +48,11 @@ export default function RoleDetail() {
         size="large"
         footer={
           summaryTags.length ? (
-            <View style={styles.tags}>
+            <ChipRow>
               {summaryTags.map((tag) => (
-                <View key={tag} style={styles.tag}>
-                  <AppText variant="caption">{tag}</AppText>
-                </View>
+                <Chip key={tag} label={tag} color={colors.text1} />
               ))}
-            </View>
+            </ChipRow>
           ) : null
         }
       />
@@ -78,15 +77,11 @@ export default function RoleDetail() {
                         {texts[ability.id]?.description}
                       </AppText>
                     ) : null}
-                    <View style={styles.tags}>
+                    <ChipRow>
                       {abilityTags(ability, t).map((tag) => (
-                        <View key={tag} style={styles.tag}>
-                          <AppText variant="caption" color={colors.text2}>
-                            {tag}
-                          </AppText>
-                        </View>
+                        <Chip key={tag} label={tag} />
                       ))}
-                    </View>
+                    </ChipRow>
                   </View>
                 </View>
               );
@@ -100,15 +95,6 @@ export default function RoleDetail() {
 
 const styles = StyleSheet.create({
   back: { flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: touch.min, marginLeft: -space[1] },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  tag: {
-    paddingHorizontal: space[3],
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface2,
-  },
   abilities: {
     paddingHorizontal: space[4],
     borderRadius: radius.lg,

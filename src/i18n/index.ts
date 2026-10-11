@@ -1,5 +1,6 @@
 import { en } from './locales/en';
-import { tr, type Translation } from './locales/tr';
+import { tr } from './locales/tr';
+import type { Translation } from './types';
 
 /** Yeni dil = locales/<kod>.ts + buraya bir satır. Eksik metin TypeScript hatası verir. */
 export const LOCALES = { tr, en } satisfies Record<string, Translation>;

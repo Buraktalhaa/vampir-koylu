@@ -1,6 +1,6 @@
 import Svg, { Path } from 'react-native-svg';
 
-import type { IconProps } from './types';
+import type { IconProps } from '@/components/icons/types';
 
 /** Lucide'da yarasa yok; aynı çizgi stiliyle (24×24, yuvarlak uçlar) çizildi. */
 export function BatIcon({ size = 24, color = 'currentColor', strokeWidth = 2 }: IconProps) {

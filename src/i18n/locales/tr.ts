@@ -1,206 +1,4 @@
-import type { RoleId } from '../../game/roles';
-import type { VoteMode } from '../../game/settings';
-import type { EffectKind, TeamId } from '../../game/types';
-
-export type AbilityText = { name: string; prompt?: string; description?: string };
-
-export type RoleText = {
-  name: string;
-  description: string;
-  /** Rol panelindeki ⓘ ile açılan detaylı (ve biraz esprili) açıklama. */
-  tip: string;
-  /** Bu gece yapacak bir şeyi olmadığında gösterilen metin. Yoksa genel metin kullanılır. */
-  idle?: string;
-  /** Yetenek id'sine göre metinler (roles/<id>.ts içindeki ability.id). */
-  abilities?: Record<string, AbilityText>;
-};
-
-/** Yetenek kullanmayan oyuncunun ekrana bir şey basması için iki seçenekli basit soru. */
-export type QuizItem = { q: string; a: string; b: string };
-
-export type Translation = {
-  languageName: string;
-  teams: Record<TeamId, { name: string; goal: string }>;
-  roles: Record<RoleId, RoleText>;
-  quiz: QuizItem[];
-  menu: { tagline: string; resume: string; newGame: string; roles: string; settings: string; howToPlay: string };
-  appSettings: { title: string; language: string };
-  encyclopedia: {
-    title: string;
-    all: string;
-    abilities: string;
-    team: string;
-    search: string;
-    noResults: string;
-    noResultsHint: (query: string) => string;
-    clearFilters: string;
-  };
-  abilityTags: {
-    night: string;
-    onDeath: string;
-    onLynch: string;
-    uses: (n: number) => string;
-    unlimited: string;
-    teamVote: string;
-    noTarget: string;
-    self: string;
-    noRepeat: string;
-    effects: Record<EffectKind, string>;
-  };
-  common: { back: string; comingSoon: string };
-  setup: {
-    step: (current: number, total: number) => string;
-    playerCount: (n: number) => string;
-    savedFromLast: string;
-    clear: string;
-    duplicate: string;
-    needMore: (n: number) => string;
-    fixFirst: string;
-    none: string;
-    summaryCount: (roles: number, players: number) => string;
-    summaryDetail: (fixed: number, random: number) => string;
-    issues: (n: number) => string;
-    summaryTitle: string;
-    summaryPlayers: string;
-    summaryVampires: string;
-    summaryRoles: string;
-    summaryDiscussion: string;
-    randomMark: string;
-    players: string;
-    namePlaceholder: string;
-    add: string;
-    roles: string;
-    random: string;
-    allRandom: string;
-    summary: (players: number, roles: number) => string;
-    start: string;
-    next: string;
-    secretVote: { label: string; hint: string };
-    errors: {
-      minPlayers3: string;
-      tooManyRoles: string;
-      notEnoughRoles: string;
-      needVampire: string;
-      tooManyVampires: (max: number) => string;
-      unique: string;
-      minPlayers: (min: number) => string;
-    };
-  };
-  game: {
-    morningSub: string;
-    diedCount: (n: number) => string;
-    nobodyDiedTitle: string;
-    nobodyDiedText: string;
-    leftGame: (name: string, alive: number) => string;
-    rolesAtEnd: string;
-    toDiscussion: string;
-    seeResult: string;
-    firstNightIdle: string;
-    moreInfo: string;
-    discussSub: (alive: number) => string;
-    introSub: string;
-    remaining: string;
-    timeUp: string;
-    playersLabel: string;
-    aliveDead: (alive: number, dead: number) => string;
-    introInfo: string;
-    autoVote: (s: number) => string;
-    startNow: string;
-    skipVoteTitle: string;
-    skipVoteMessage: string;
-    secretSub: (i: number, n: number) => string;
-    voter: (name: string) => string;
-    openSub: string;
-    openTitle: string;
-    votesGiven: (given: number, total: number) => string;
-    notVoted: (n: number) => string;
-    tie: string;
-    leader: string;
-    equal: string;
-    finishWill: (name: string) => string;
-    finishNobody: string;
-    verdictSub: string;
-    villageDecided: string;
-    hangedWith: (votes: number) => string;
-    nobodyHangedTitle: string;
-    tieText: (names: string) => string;
-    noVotesText: string;
-    revengeTriggered: (name: string) => string;
-    lastChoice: (name: string) => string;
-    giveToName: (name: string) => string;
-    revengeSub: string;
-    revengeHint: string;
-    revengeTitle: (name: string) => string;
-    wentWith: (name: string) => string;
-    vampiresLeft: (n: number) => string;
-    spellQuestion: string;
-    spellHint: string;
-    usesOf: (left: number, total: number) => string;
-    usedStamp: (round: number) => string;
-    choose: string;
-    chooseTarget: string;
-    useShield: string;
-    sleepTitle: string;
-    sleepText: string;
-    continueIn: (s: number) => string;
-    giveTo: string;
-    dontLook: string;
-    tapToRevealName: (name: string) => string;
-    turnOf: (i: number, n: number) => string;
-    yourRole: (name: string) => string;
-    goal: string;
-    gotIt: string;
-    confirmWith: (name: string) => string;
-    pass: string;
-    self: string;
-    next: string;
-    tapToReveal: string;
-    hideAndPass: string;
-    teammates: string;
-    night: (n: number) => string;
-    day: (n: number) => string;
-    sleeping: string;
-    confirm: string;
-    skip: string;
-    usesLeft: (n: number) => string;
-    protectedLastNight: string;
-    teammate: string;
-    died: (name: string) => string;
-    nobodyDied: string;
-    discuss: string;
-    toVote: string;
-    vote: string;
-    finishVote: string;
-    hanged: (name: string) => string;
-    nobodyHanged: string;
-    continue: string;
-    wins: (team: string) => string;
-    newGame: string;
-    mainMenu: string;
-    dead: string;
-    addTime: string;
-    endEarly: string;
-    abstain: string;
-    quitTitle: string;
-    quitMessage: string;
-    cancel: string;
-    quit: string;
-    timeline: string;
-    usedAbility: (actor: string, ability: string, target?: string) => string;
-    saved: (name: string) => string;
-    pickedBy: (names: string) => string;
-    skipVote: string;
-    toNight: string;
-    verdict: string;
-    timeLeft: string;
-  };
-  gameSettings: {
-    title: string;
-    revealRoleOnDeath: { label: string; hint: string };
-    firstNightActions: { label: string; hint: string };
-    voteMode: { label: string; options: Record<VoteMode, { label: string; hint: string }> };
-  };
-};
+import type { Translation } from '../types';
 
 export const tr: Translation = {
   languageName: 'Türkçe',
@@ -233,7 +31,7 @@ export const tr: Translation = {
   roles: {
     villager: {
       name: 'Köylü',
-      tip: "Bir rolün yok, niye buraya baktın? Gündüz oyunu dinle, şüphelendiğine oy ver. O kadar.",
+      tip: "Bir rolün yok, tarlada takılmaya devam.",
       description: 'Özel bir gücün yok. Gündüz tartış, şüphelendiğin kişiye oy ver.',
     },
     vampire: {
@@ -267,7 +65,7 @@ export const tr: Translation = {
       abilities: { revenge: { name: 'İntikam', prompt: 'Yanında kimi götüreceksin?', description: 'Köy seni asarsa yanında bir oyuncuyu daha götürürsün.' } },
     },
   },
-  menu: { tagline: 'Köyde biri vampir. Kim olduğunu bulun.', resume: 'Devam eden oyuna dön', newGame: 'Yeni Oyun', roles: 'Karakterler', settings: 'Ayarlar', howToPlay: 'Nasıl Oynanır' },
+  menu: { tagline: 'Bu köyde tuhaf şeyler oluyor…', resume: 'Devam eden oyuna dön', newGame: 'Yeni Oyun', roles: 'Karakterler', settings: 'Ayarlar' },
   appSettings: { title: 'Ayarlar', language: 'Dil' },
   encyclopedia: {
     title: 'Karakterler',
@@ -291,7 +89,7 @@ export const tr: Translation = {
     noRepeat: 'Art arda aynı kişi olmaz',
     effects: { protect: 'Koruma', protectAll: 'Koruma', kill: 'Öldürme', investigate: 'Bilgi' },
   },
-  common: { back: 'Geri', comingSoon: 'Yakında' },
+  common: { back: 'Geri' },
   setup: {
     step: (current, total) => `Kurulum ${current} / ${total}`,
     playerCount: (n) => `${n} oyuncu`,
@@ -316,7 +114,6 @@ export const tr: Translation = {
     roles: 'Karakterler',
     random: 'Rastgele',
     allRandom: 'Hepsi Rastgele',
-    summary: (players, roles) => `${players} oyuncu · ${roles} sabit rol`,
     start: 'Oyunu Başlat',
     next: 'Devam',
     secretVote: {
@@ -324,7 +121,6 @@ export const tr: Translation = {
       hint: 'Açıksa telefon elden ele dolaşır ve herkes gizlice oy verir. Kapalıysa telefon ortada durur, herkesin aldığı oy sayısı girilir.',
     },
     errors: {
-      minPlayers3: 'En az 3 oyuncu gerekli.',
       tooManyRoles: 'Rol sayısı oyuncu sayısını aşıyor.',
       notEnoughRoles: 'Kalan yerleri dolduracak rastgele karakter yok.',
       needVampire: 'En az 1 vampir olmalı.',

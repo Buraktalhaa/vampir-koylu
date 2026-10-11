@@ -3,7 +3,7 @@ import { getLocales } from 'expo-localization';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { DEFAULT_LANGUAGE, getStrings, LOCALES, type Language } from './index';
-import type { Translation } from './locales/tr';
+import type { Translation } from './types';
 
 const STORAGE_KEY = 'language';
 
