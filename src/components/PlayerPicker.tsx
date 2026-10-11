@@ -5,15 +5,20 @@ import type { Phase, Player, PlayerId } from '@/game/types';
 import { colors, phases, radius, space } from '@/theme/tokens';
 
 import { AppText } from './AppText';
+import { PlayerAvatar } from './PlayerAvatar';
 
 export type PickerItem = {
   player: Player;
-  /** Seçilemezse nedeni (ekranda görünür). */
+  /** Seçilemezse nedeni (hücrede görünür). */
   disabledReason?: string;
-  /** Avatarın altında gösterilecek ek içerik (ör. oy sayacı). */
-  trailing?: React.ReactNode;
-  /** Avatarın köşesinde küçük rozet (ör. takım arkadaşının rol madalyonu). */
+  /** İsmin altında bilgi notu (ör. "Selin'in seçimi", "Sen"). */
+  note?: string;
+  /** Sol üst köşede küçük sayı (ör. takım arkadaşlarının oy sayısı). */
+  count?: number;
+  /** Sağ üst köşede rozet (ör. takım arkadaşının rol madalyonu). Kilit ikonunun yerine geçer. */
   badge?: React.ReactNode;
+  /** Hücrenin altına eklenecek içerik. */
+  trailing?: React.ReactNode;
 };
 
 type Props = {
@@ -21,73 +26,74 @@ type Props = {
   selectedId?: PlayerId;
   onSelect?: (id: PlayerId) => void;
   phase: Phase;
-  /** Satır başına oyuncu sayısı. */
+  /** Satır başına hücre. Verilmezse oyuncu sayısına göre 3 ya da 4. */
   columns?: number;
 };
 
-const AVATAR = 68;
-
-/** Oyuncular yuvarlak avatarlarla ızgara halinde. Seçili, seçilemez, ölü ve rozet durumlarını gösterir. */
-export function PlayerPicker({ items, selectedId, onSelect, phase, columns = 3 }: Props) {
+/** Oyuncu ızgarası: kart hücrelerde yuvarlak avatar. Seçili / seçilemez / ölü / rozet durumları. */
+export function PlayerPicker({ items, selectedId, onSelect, phase, columns }: Props) {
   const { accent, selectBg } = phases[phase];
+  const cols = columns ?? (items.length > 9 ? 4 : 3);
+  const compact = cols >= 4;
   return (
     <View style={styles.grid}>
-      {items.map(({ player, disabledReason, trailing, badge }) => {
+      {items.map(({ player, disabledReason, note, count, badge, trailing }) => {
         const selected = player.id === selectedId;
-        const disabled = !!disabledReason || !player.alive || !onSelect;
-        const dimmed = !!disabledReason || !player.alive;
+        const dead = !player.alive;
+        const disabled = !!disabledReason || dead || !onSelect;
         return (
-          <View key={player.id} style={[styles.cell, { width: `${100 / columns}%` }]}>
+          <View key={player.id} style={[styles.cell, { width: `${100 / cols}%` }]}>
             <Pressable
               accessibilityRole={onSelect ? 'radio' : undefined}
               accessibilityState={{ selected, disabled }}
-              accessibilityLabel={disabledReason ? `${player.name}, ${disabledReason}` : player.name}
+              accessibilityLabel={[player.name, disabledReason, note].filter(Boolean).join(', ')}
               disabled={disabled}
               onPress={() => onSelect?.(player.id)}
-              style={({ pressed }) => [styles.item, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.card,
+                compact && styles.cardCompact,
+                selected && { borderColor: accent, borderWidth: 2, backgroundColor: selectBg },
+                (disabledReason || dead) && styles.cardOff,
+                pressed && styles.pressed,
+              ]}
             >
-              <View
-                style={[
-                  styles.avatar,
-                  selected && { borderColor: accent, borderWidth: 3, backgroundColor: selectBg },
-                  disabledReason && styles.avatarDisabled,
-                  dimmed && styles.dimmed,
-                ]}
-              >
-                <AppText variant="h1" color={selected ? accent : colors.text1}>
-                  {player.name.charAt(0).toLocaleUpperCase('tr')}
-                </AppText>
-                {selected ? (
-                  <View style={[styles.corner, styles.cornerRight, { backgroundColor: accent }]}>
-                    <Check size={14} color={colors.textInverse} strokeWidth={3} />
-                  </View>
-                ) : null}
-                {!player.alive ? (
-                  <View style={[styles.corner, styles.cornerRight]}>
-                    <Skull size={14} color={colors.text2} />
-                  </View>
-                ) : disabledReason && !badge ? (
-                  <View style={[styles.corner, styles.cornerRight]}>
-                    <Lock size={12} color={colors.text2} />
-                  </View>
-                ) : null}
-              </View>
-              {badge ? <View style={styles.badge}>{badge}</View> : null}
+              <PlayerAvatar name={player.name} size={compact ? 32 : 40} dimmed={dead || !!disabledReason} />
               <AppText
-                variant="button"
+                variant={compact ? 'caption' : 'button'}
                 numberOfLines={1}
-                color={player.alive ? colors.text1 : colors.text3}
-                style={[styles.name, !player.alive && styles.strike]}
+                color={dead || disabledReason ? colors.text3 : colors.text1}
+                style={[styles.center, dead && styles.strike]}
               >
                 {player.name}
               </AppText>
-              {disabledReason ? (
+              {disabledReason || note ? (
                 <AppText variant="caption" numberOfLines={2} color={colors.text3} style={styles.center}>
-                  {disabledReason}
+                  {disabledReason ?? note}
                 </AppText>
               ) : null}
+
+              {count ? (
+                <View style={[styles.corner, styles.left]}>
+                  <AppText variant="caption">{count}</AppText>
+                </View>
+              ) : null}
+              {selected ? (
+                <View style={[styles.corner, styles.right, { backgroundColor: accent }]}>
+                  <Check size={13} color={colors.textInverse} strokeWidth={3} />
+                </View>
+              ) : dead ? (
+                <View style={[styles.corner, styles.right]}>
+                  <Skull size={12} color={colors.text2} />
+                </View>
+              ) : badge ? (
+                <View style={[styles.cornerBare, styles.right]}>{badge}</View>
+              ) : disabledReason ? (
+                <View style={[styles.corner, styles.right]}>
+                  <Lock size={11} color={colors.text2} />
+                </View>
+              ) : null}
             </Pressable>
-            {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
+            {trailing}
           </View>
         );
       })}
@@ -96,39 +102,37 @@ export function PlayerPicker({ items, selectedId, onSelect, phase, columns = 3 }
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -space[1] },
-  cell: { paddingHorizontal: space[1], paddingVertical: space[2], alignItems: 'center' },
-  item: { alignItems: 'center', gap: space[1], width: '100%' },
-  pressed: { opacity: 0.8, transform: [{ scale: 0.96 }] },
-  avatar: {
-    width: AVATAR,
-    height: AVATAR,
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    borderColor: colors.lineStrong,
-    backgroundColor: colors.surface2,
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
+  cell: { padding: 5 },
+  card: {
+    minHeight: 88,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: space[1],
+    paddingVertical: space[2],
+    paddingHorizontal: space[1],
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.surface1,
   },
-  avatarDisabled: { borderStyle: 'dashed' },
-  dimmed: { opacity: 0.5 },
+  cardCompact: { minHeight: 76, paddingVertical: space[2] },
+  cardOff: { borderStyle: 'dashed', backgroundColor: 'transparent' },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.97 }] },
+  center: { textAlign: 'center' },
+  strike: { textDecorationLine: 'line-through' },
   corner: {
     position: 'absolute',
-    bottom: -2,
-    width: 24,
-    height: 24,
+    top: 6,
+    minWidth: 22,
+    height: 22,
+    paddingHorizontal: 4,
     borderRadius: radius.pill,
     backgroundColor: colors.surface3,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.bg1,
   },
-  cornerRight: { right: -2 },
-  // Rozet avatarın sol alt köşesinde; avatar soluk olsa da net görünür.
-  badge: { position: 'absolute', top: AVATAR - 26, left: '50%', marginLeft: -AVATAR / 2 - 4 },
-  name: { textAlign: 'center', maxWidth: '100%' },
-  center: { textAlign: 'center' },
-  strike: { textDecorationLine: 'line-through' },
-  trailing: { marginTop: space[2] },
+  cornerBare: { position: 'absolute', top: 4 },
+  left: { left: 6 },
+  right: { right: 6 },
 });

@@ -23,6 +23,7 @@ export function TeamBadge({ team }: { team: TeamId }) {
 
 const styles = StyleSheet.create({
   badge: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[1],

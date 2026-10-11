@@ -48,6 +48,8 @@ export type Ability = {
   teamVote?: boolean;
   /** İlk gece kullanılamaz. */
   skipFirstNight?: boolean;
+  /** Pas geçilemez; oyuncu mutlaka bir hedef seçer (ör. vampir ısırığı). */
+  required?: boolean;
 };
 
 export type RoleDefinition<Id extends string = string> = {

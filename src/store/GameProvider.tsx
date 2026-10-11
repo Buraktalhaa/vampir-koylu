@@ -31,7 +31,7 @@ const SESSION_KEY = 'activeSession';
 /** Varsayılan ayarlar değişince artırılır: eski kayıtlı ayarlar atılır, oyuncular ve dağılım korunur. */
 const SETTINGS_VERSION = 2;
 /** Oyun kayıt biçimi değişince artırılır: uyumsuz eski kayıt yüklenmez. */
-const SESSION_VERSION = 1;
+const SESSION_VERSION = 2;
 
 function defaultDraft(): GameDraft {
   return { names: [], setup: allRandomSetup(), settings: DEFAULT_SETTINGS };

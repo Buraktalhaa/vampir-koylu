@@ -2,7 +2,7 @@ import { alivePlayers } from '@/game/teams';
 import type { ActionSubmission, GameState, PlayerId } from '@/game/types';
 
 /** Oyun ekranının aşamaları: telefonun dolaştığı ve ortada durduğu adımlar. */
-export type Stage = 'reveal' | 'night' | 'morning' | 'discussion' | 'vote' | 'verdict' | 'revenge' | 'end';
+export type Stage = 'reveal' | 'night' | 'morning' | 'discussion' | 'vote' | 'verdict' | 'revenge' | 'avenged' | 'end';
 
 /** Oyunun akıştaki yeri. Oyunla birlikte kaydedilir; uygulama kapansa da kaldığı yerden devam eder. */
 export type Flow = {
@@ -16,8 +16,8 @@ export type Flow = {
   votes: Record<PlayerId, PlayerId>;
   /** Sabah/oylama sonucunda gösterilecek olayların başladığı yer. */
   eventsFrom: number;
-  /** İlk gece yetenekler açıksa: rolünü gören oyuncu aynı sırada gece işlemini yapıyor. */
-  acting: boolean;
+  /** Son oylamada her oyuncunun aldığı oy (oylama sonucu ekranı için). */
+  tally: Record<PlayerId, number>;
 };
 
 export type Session = { game: GameState; flow: Flow };
@@ -33,7 +33,7 @@ export function newSession(game: GameState): Session {
       submissions: [],
       votes: {},
       eventsFrom: 0,
-      acting: false,
+      tally: {},
     },
   };
 }
@@ -43,5 +43,5 @@ export function newSession(game: GameState): Session {
  * sıradaki oyuncu yeniden devir ekranından geçer.
  */
 export function resumeSafely(session: Session): Session {
-  return { ...session, flow: { ...session.flow, shown: false, acting: false } };
+  return { ...session, flow: { ...session.flow, shown: false } };
 }

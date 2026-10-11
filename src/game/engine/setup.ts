@@ -111,15 +111,6 @@ export function rollRoles(playerCount: number, setup: RoleSetup, rng: Rng = Math
   return counts;
 }
 
-/** Oyuncu sayısına göre hazır, dengeli bir öneri. */
-export function suggestRoles(playerCount: number): RoleSetup {
-  const vampire = Math.min(maxVampires(playerCount), Math.max(1, Math.floor(playerCount / 4)));
-  const setup: RoleSetup = { vampire, witch: 1, healer: 1, avenger: 1 };
-  const used = Object.values(setup).reduce<number>((s, n) => s + (n as number), 0);
-  setup.villager = Math.max(0, playerCount - used);
-  return setup;
-}
-
 /** Tüm karakterler rastgele. */
 export function allRandomSetup(): RoleSetup {
   return Object.fromEntries(ROLE_IDS.map((id) => [id, 'random'])) as RoleSetup;
