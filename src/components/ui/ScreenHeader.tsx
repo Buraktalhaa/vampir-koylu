@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { colors, DEFAULT_PHASE, phases, radius, space, touch } from '@/theme/tokens';
 
 import { AppText } from '@/components/ui/AppText';
+import { SectionLabel } from '@/components/ui/SectionLabel';
 
 type Props = {
   title: string;
@@ -32,9 +33,7 @@ export function ScreenHeader({ title, right, step, stepLabel, onBack = () => rou
       {step ? (
         <View style={styles.stepWrap}>
           {stepLabel ? (
-            <AppText variant="caption" color={colors.text3}>
-              {stepLabel}
-            </AppText>
+            <SectionLabel>{stepLabel}</SectionLabel>
           ) : null}
           <View style={styles.bars}>
             {Array.from({ length: step[1] }, (_, i) => (

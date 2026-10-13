@@ -49,12 +49,35 @@ npx expo lint      # lint
 
 ## Yeni karakter eklemek
 
-1. `src/game/roles/<id>.ts` dosyasında `defineRole` ile tanımla.
-2. `src/game/roles/index.ts` içindeki listeye ekle.
-3. `src/i18n/locales/tr.ts` ve `en.ts` içine isim, açıklama, detaylı açıklama (`tip`) ve yetenek metinlerini yaz.
-4. `src/theme/roles.ts` içine ikonunu ekle.
-5. Yeni mekanik gerekiyorsa `src/game/engine/effects.ts` içine tek bir efekt ekle.
-6. Kurallarını test etmek için `__tests__/roles-test.ts` içine testlerini yaz.
+```bash
+npm run new-role -- <id> <village|vampire|neutral>
+# örnek: npm run new-role -- hunter village
+```
+
+Komut iskeleti kurar; sonra şunları doldur:
+
+1. `src/game/roles/<id>.ts` — kurallar (yetenekler, oy ağırlığı, kazanma koşulu…)
+2. `src/i18n/locales/tr.ts` ve `en.ts` — `TODO` metinleri (isim, açıklama, ⓘ detayı, yetenek metinleri)
+3. `src/theme/roles.ts` — ikon ([lucide.dev/icons](https://lucide.dev/icons))
+4. `__tests__/role-<id>-test.ts` — kural testleri
+5. `npm test` — metinlerde `TODO` kaldıysa test başarısız olur
+
+Kurulum ekranı, ansiklopedi, gece ekranı, oyun sonu özeti gibi yerler yeni karakteri kendiliğinden gösterir.
+Yeni bir **mekanik** gerekiyorsa (mevcut `kill` / `protect` / `protectAll` / `investigate` yetmiyorsa)
+`src/game/engine/effects.ts` içine tek bir efekt eklenir.
+
+## Import kuralı
+
+Göreli yol (`./`, `../`) kullanılmaz; her import tam yolu gösterir:
+
+| Kısayol | Klasör |
+|---|---|
+| `@/…` | `src/…` |
+| `@assets/…` | `assets/…` (ör. sesler) |
+| `@test-utils/…` | `test-utils/…` (yalnızca testler) |
+
+`src/game` içindeki dosyalar birbirini modül yoluyla alır (`@/game/types`, `@/game/roles`); `@/game` toplu
+dosyası yalnızca oyun motorunun dışından kullanılır (döngüsel import olmasın diye).
 
 ## Klasörler
 
@@ -62,10 +85,12 @@ npx expo lint      # lint
 |---|---|
 | `src/app/` | Ekranlar (Expo Router). `game.tsx` yalnızca oyun akışını yönetir |
 | `src/game/` | Oyun motoru: roller, kurallar, kurulum, olaylar (arayüzden bağımsız, testli) |
-| `src/components/ui/` | Genel yapı taşları: `AppText`, `Button`, `Screen`, `ScreenHeader`, `TextField`, `Chip`, `Stepper`, `SettingSwitch`, `ErrorBox`, `InfoBand`, `ActionBar`, `CountdownRing` |
+| `src/components/ui/` | Genel yapı taşları: `AppText`, `Button`, `IconButton`, `Screen`, `ScreenHeader`, `SectionLabel`, `TextField`, `Chip`, `Stepper`, `SettingSwitch`, `SettingsGroup`, `BottomSheet`, `SortableGrid`, `ErrorBox`, `InfoBand`, `ActionBar`, `CountdownRing` |
 | `src/components/game/` | Oyun ekranları: `Handoff`, `NightTurn`, `IdleTurn`, `SpellChoice`, `TargetPicker`, `MorningReport`, `Discussion`, `SecretVote`, `OpenVote`, `Verdict`, `Revenge`, `GameOver` ve ortak parçaları |
 | `src/components/player/` | Oyuncu avatarı ve oyuncu ızgarası |
 | `src/components/role/` | Karakter kartı, madalyon, rol rozeti, takım etiketi |
+| `src/components/setup/` | Kurulum parçaları: karakter kartı (`RoleSlotCard`), aralık paneli (`RangeSheet`) |
+| `src/feedback/` | Müzik, ses efektleri, titreşim ve uygulama ayarları |
 | `src/components/art/` | Ana menü görseli ve rastgele gece manzaraları (SVG) |
 | `src/components/icons/` | Lucide'da olmayan özel ikonlar (ör. yarasa) |
 | `src/i18n/` | Dil desteği: `types.ts` (metin yapısı), `locales/tr.ts`, `locales/en.ts` |
@@ -84,6 +109,7 @@ Dışarıdan yalnızca yaygın ve köklü kütüphaneler kullanılır; küçük 
 | `@react-native-async-storage/async-storage` | Oyuncu listesi, ayarlar ve devam eden oyunun kaydı |
 | `@expo-google-fonts/*` | Cinzel, Fira Sans, Pirata One fontları |
 | `lucide-react-native` | İkon seti |
+| `expo-audio` | Müzik ve ses efektleri (sesler projede kodla üretildi, bkz. `assets/audio/LICENSES.md`) |
 | `jest`, `jest-expo` (geliştirme) | Testler |
 
 Yeni paket eklemeden önce: bu iş birkaç satırla yazılabiliyorsa yazılır. Paket gerekiyorsa `npx expo install <paket>` ile eklenir.

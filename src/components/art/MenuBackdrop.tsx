@@ -3,7 +3,7 @@ import Svg, { Defs, LinearGradient, Rect, Stop, SvgXml } from 'react-native-svg'
 
 import { colors } from '@/theme/tokens';
 
-import { MENU_ART_XML } from './menuArt';
+import { MENU_ART_XML } from '@/components/art/menuArt';
 
 /** Menü görseli + altta butonlar okunsun diye koyulaşan perde. */
 export function MenuBackdrop() {
