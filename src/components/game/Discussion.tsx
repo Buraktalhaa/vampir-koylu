@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { Info, Moon, Plus, SkipForward, Sun, Timer, Vote } from 'lucide-react-native';
 import { type ReactNode, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
@@ -16,6 +15,8 @@ import { colors, phases, radius, space } from '@/theme/tokens';
 
 import { ActionBar } from '@/components/ui/ActionBar';
 import { InfoBand } from '@/components/ui/InfoBand';
+import { SectionLabel } from '@/components/ui/SectionLabel';
+import { hapticWarning } from '@/feedback/haptics';
 
 /** Tartışma süresi bitince oylamaya geçmeden önceki kısa geri sayım. */
 const AUTO_VOTE_SECONDS = 3;
@@ -32,7 +33,7 @@ export function Discussion({ game, voteToday, onVote, onNight }: DiscussionProps
   const { t } = useLanguage();
   const [timeUp, setTimeUp] = useState(false);
   const { remaining, total, addSeconds } = useCountdown(game.settings.discussionSeconds, () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    hapticWarning();
     if (voteToday) setTimeUp(true);
     else onNight();
   });
@@ -88,9 +89,7 @@ export function Discussion({ game, voteToday, onVote, onNight }: DiscussionProps
       <CountdownRing remaining={remaining} total={total} label={remaining > 0 ? t.game.remaining : t.game.timeUp} />
       {!voteToday ? <InfoBand icon={Info} text={t.game.introInfo} /> : null}
       <View style={styles.sectionHead}>
-        <AppText variant="caption" color={colors.text3}>
-          {t.game.playersLabel.toLocaleUpperCase('tr')}
-        </AppText>
+        <SectionLabel>{t.game.playersLabel}</SectionLabel>
         <AppText variant="small" color={colors.text3}>
           {t.game.aliveDead(alive, dead)}
         </AppText>

@@ -24,6 +24,8 @@ export type PickerItem = {
 type Props = {
   items: PickerItem[];
   selectedId?: PlayerId;
+  /** Birden fazla seçim (ör. Dedektif'in iki hedefi). */
+  selectedIds?: PlayerId[];
   onSelect?: (id: PlayerId) => void;
   phase: Phase;
   /** Satır başına hücre. Verilmezse oyuncu sayısına göre 3 ya da 4. */
@@ -31,14 +33,14 @@ type Props = {
 };
 
 /** Oyuncu ızgarası: kart hücrelerde yuvarlak avatar. Seçili / seçilemez / ölü / rozet durumları. */
-export function PlayerPicker({ items, selectedId, onSelect, phase, columns }: Props) {
+export function PlayerPicker({ items, selectedId, selectedIds, onSelect, phase, columns }: Props) {
   const { accent, selectBg } = phases[phase];
   const cols = columns ?? (items.length > 9 ? 4 : 3);
   const compact = cols >= 4;
   return (
     <View style={styles.grid}>
       {items.map(({ player, disabledReason, note, count, badge, trailing }) => {
-        const selected = player.id === selectedId;
+        const selected = player.id === selectedId || !!selectedIds?.includes(player.id);
         const dead = !player.alive;
         const disabled = !!disabledReason || dead || !onSelect;
         return (

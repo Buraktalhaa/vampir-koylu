@@ -1,5 +1,5 @@
-import { getRole } from './roles';
-import type { GameState, Player, TeamId } from './types';
+import { getRole } from '@/game/roles';
+import type { GameState, Player, TeamId } from '@/game/types';
 
 export function teamOf(player: Player): TeamId {
   return getRole(player.roleId).team;
@@ -8,7 +8,23 @@ export function teamOf(player: Player): TeamId {
 /** Hayattaki oyuncular, oturma sırasıyla. Telefon sadece bunlar arasında dolaşır. */
 /** Takımını tanıyan oyuncu (ör. vampir) için: diğer oyuncu takım arkadaşı mı? */
 export function isKnownTeammate(viewer: Player, other: Player): boolean {
-  return other.id !== viewer.id && getRole(viewer.roleId).knowsTeammates === true && teamOf(other) === teamOf(viewer);
+  return (
+    other.id !== viewer.id &&
+    getRole(viewer.roleId).knowsTeammates === true &&
+    !getRole(other.roleId).hiddenFromTeam &&
+    teamOf(other) === teamOf(viewer)
+  );
+}
+
+/** Araştıran birine (ör. Kâhin) görünen takım; gizli roller farklı görünebilir (`appearsAs`). */
+export function seenTeamOf(roleId: string): TeamId {
+  const role = getRole(roleId);
+  return role.appearsAs ?? role.team;
+}
+
+/** Araştıran birine göre iki rol aynı takımda mı görünür (ör. Dedektif)? */
+export function seemSameTeam(roleA: string, roleB: string): boolean {
+  return seenTeamOf(roleA) === seenTeamOf(roleB);
 }
 
 export function alivePlayers(state: GameState): Player[] {
@@ -30,6 +46,11 @@ export const TEAMS: Record<TeamId, TeamDefinition> = {
   village: {
     id: 'village',
     hasWon: (state) => alivePlayers(state).every((p) => teamOf(p) !== 'vampire'),
+  },
+  // Tarafsızların ortak bir kazanma koşulu yok; her rol kendi koşuluyla kazanır (ör. asılan Deli).
+  neutral: {
+    id: 'neutral',
+    hasWon: () => false,
   },
   vampire: {
     id: 'vampire',

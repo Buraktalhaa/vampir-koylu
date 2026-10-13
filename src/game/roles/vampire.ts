@@ -1,4 +1,4 @@
-import { defineRole } from './defineRole';
+import { defineRole } from '@/game/roles/defineRole';
 
 export const vampire = defineRole({
   id: 'vampire',

@@ -5,10 +5,11 @@ import {
   resolveDayVote,
   resolveNight,
   resolveTrigger,
+  seenTeamOf,
   skipTrigger,
 } from '@/game';
 
-import { alive, makeGame } from '../test-utils/game';
+import { alive, makeGame } from '@test-utils/game';
 
 // Oyuncu sırası her testte açıkça yazılı: p1, p2, ...
 
@@ -180,5 +181,77 @@ describe('Köylü', () => {
   it('gece yapacak bir şeyi yok', () => {
     const g = makeGame(['vampire', 'villager', 'villager']);
     expect(availableNightAbilities(g, g.players[1])).toHaveLength(0);
+  });
+});
+
+describe('Kâhin', () => {
+  it('takımları doğru görür: köy, vampir, tarafsız', () => {
+    expect(seenTeamOf('villager')).toBe('village');
+    expect(seenTeamOf('vampire')).toBe('vampire');
+    expect(seenTeamOf('jester')).toBe('neutral');
+  });
+
+  it('kehaneti olay kaydına takım olarak yazılır', () => {
+    const g = resolveNight(makeGame(['vampire', 'seer', 'villager', 'villager']), [
+      { actorId: 'p2', abilityId: 'divine', targetId: 'p1' },
+    ]);
+    expect(g.events).toContainEqual(expect.objectContaining({ type: 'investigated', actorId: 'p2', targetId: 'p1', seenTeam: 'vampire' }));
+  });
+
+  it('kendine bakamaz', () => {
+    const g = makeGame(['vampire', 'seer', 'villager']);
+    const targets = getValidTargets(g, g.players[1], findAbility(g.players[1], 'divine')).map((p) => p.id);
+    expect(targets).not.toContain('p2');
+  });
+});
+
+describe('Belediye Başkanı', () => {
+  it('gizli oylamada oyu 2 sayılır', () => {
+    // p2 (Başkan) → p1, p3 → p4: 2'ye 1, p1 asılır
+    const g = resolveDayVote(makeGame(['vampire', 'mayor', 'villager', 'villager']), { p2: 'p1', p3: 'p4' });
+    expect(alive(g, 'p1')).toBe(false);
+  });
+
+  it('2 oy, 2 tek oyla eşitlenirse kimse asılmaz', () => {
+    const g = resolveDayVote(makeGame(['vampire', 'mayor', 'villager', 'villager', 'villager']), { p2: 'p1', p3: 'p4', p5: 'p4' });
+    expect(g.players.every((p) => p.alive)).toBe(true);
+  });
+
+  it('ölü başkanın oyu sayılmaz', () => {
+    let g = resolveNight(makeGame(['vampire', 'mayor', 'villager', 'villager', 'villager']), [
+      { actorId: 'p1', abilityId: 'bite', targetId: 'p2' },
+    ]);
+    g = resolveDayVote(g, { p2: 'p1', p3: 'p4' });
+    expect(alive(g, 'p4')).toBe(false);
+    expect(alive(g, 'p1')).toBe(true);
+  });
+});
+
+describe('Deli', () => {
+  it('köy onu asarsa tek başına kazanır ve oyun biter', () => {
+    const g = resolveDayVote(makeGame(['vampire', 'jester', 'villager', 'villager', 'villager']), { p1: 'p2', p3: 'p2', p4: 'p2' });
+    expect(g.winner).toBe('neutral');
+    expect(g.winners).toEqual(['p2']);
+  });
+
+  it('gece öldürülürse kazanmaz', () => {
+    const g = resolveNight(makeGame(['vampire', 'jester', 'villager', 'villager', 'villager']), [
+      { actorId: 'p1', abilityId: 'bite', targetId: 'p2' },
+    ]);
+    expect(g.winner).toBeNull();
+    expect(g.winners).toBeUndefined();
+  });
+
+  it('İntikamcı götürürse kazanmaz', () => {
+    let g = makeGame(['vampire', 'avenger', 'jester', 'villager', 'villager', 'villager']);
+    g = resolveDayVote(resolveNight(g, []), { p1: 'p2', p4: 'p2', p5: 'p2' });
+    g = resolveTrigger(g, g.pendingTriggers[0], 'p3');
+    expect(g.winner).toBeNull();
+  });
+
+  it('vampirler ölünce köy kazanır, hayattaki deli kaybeder', () => {
+    const g = resolveDayVote(makeGame(['vampire', 'jester', 'villager', 'villager']), { p2: 'p1', p3: 'p1', p4: 'p1' });
+    expect(g.winner).toBe('village');
+    expect(g.winners).toBeUndefined();
   });
 });

@@ -1,11 +1,13 @@
-import { Info } from 'lucide-react-native';
+import { Crosshair, Info, Sparkles } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/AppText';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { RolePortrait } from '@/components/role/RolePortrait';
+import { RoleWatermark } from '@/components/role/RoleWatermark';
 import { TeamBadge } from '@/components/role/TeamBadge';
+import { InfoBand } from '@/components/ui/InfoBand';
 import { type GameState, getRole, isKnownTeammate, type Player, type RoleId } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { colors, phases, radius, space } from '@/theme/tokens';
@@ -19,10 +21,15 @@ export function RoleSummary({ game, player, abilityName }: { game: GameState; pl
   const [open, setOpen] = useState(false);
   const roleId = player.roleId as RoleId;
   const mates = game.players.filter((p) => isKnownTeammate(player, p));
+  // Rol Çalan: işaretlediği kişiyi hatırlat.
+  const via = getRole(roleId).stealsRoleVia;
+  const markId = via ? player.abilityState[via]?.lastTarget : undefined;
+  const markedName = markId ? game.players.find((p) => p.id === markId)?.name : undefined;
   return (
     <View style={styles.summary}>
+      <RoleWatermark roleId={roleId} size={96} />
       <View style={styles.summaryHead}>
-        <RolePortrait roleId={roleId} size={36} />
+        <RolePortrait roleId={roleId} size={44} />
         <AppText variant="h3" numberOfLines={1} style={styles.flexShrink}>
           {abilityName ? `${t.roles[roleId].name} · ${abilityName}` : t.roles[roleId].name}
         </AppText>
@@ -39,6 +46,10 @@ export function RoleSummary({ game, player, abilityName }: { game: GameState; pl
           <Info size={16} color={open ? colors.textInverse : colors.text2} />
         </Pressable>
       </View>
+      {markedName ? <InfoBand icon={Crosshair} tone="info" text={t.game.markedTarget(markedName)} /> : null}
+      {player.convertedFrom ? (
+        <InfoBand icon={Sparkles} tone="warning" text={t.game.roleChanged(t.roles[player.convertedFrom as RoleId].name, t.roles[roleId].name)} />
+      ) : null}
       {mates.length ? (
         <View style={styles.summaryMates}>
           <AppText variant="caption" color={colors.text3}>
@@ -78,6 +89,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.surface1,
+    overflow: 'hidden',
   },
   summaryHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   summaryMates: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },

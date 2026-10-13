@@ -1,8 +1,13 @@
-import { Dices, Minus, Plus } from 'lucide-react-native';
+import { Dices, Info, Minus, Plus } from 'lucide-react-native';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { RoleInfoSheet } from '@/components/role/RoleInfoSheet';
 import { RolePortrait } from '@/components/role/RolePortrait';
+import { RoleWatermark } from '@/components/role/RoleWatermark';
+import { RangeSheet } from '@/components/setup/RangeSheet';
 import { AppText } from '@/components/ui/AppText';
+import { IconButton } from '@/components/ui/IconButton';
 import { randomRange, type RoleSlot } from '@/game';
 import { ROLES, type RoleId } from '@/game/roles';
 import { useLanguage } from '@/i18n/LanguageProvider';
@@ -25,93 +30,83 @@ type Props = {
 /** Kurulumda tek karakterin kartı: madalyon + isim; sabit sayı ya da rastgele için en az / en çok; altta Yok / Rastgele. */
 export function RoleSlotCard({ roleId, slot, onChange, players, limit, full, error }: Props) {
   const { t } = useLanguage();
-  const { icon: TeamIcon, fg, line } = TEAM_VISUALS[ROLES[roleId].team];
+  const { line } = TEAM_VISUALS[ROLES[roleId].team];
   const range = randomRange(slot);
-  const isNone = slot === undefined;
+  // "Yok" kayıtta 0 olarak tutulur (undefined = bu karakter kurulumda hiç yoktu, ör. sonradan eklendi).
+  const isNone = slot === undefined || slot === 0;
   const count = typeof slot === 'number' ? slot : 0;
-
-  const setMin = (min: number) => onChange({ min, max: range?.max });
-  // En çok: oyuncu sayısının üstüne çıkınca sınırsız (∞) olur; ∞'dan − ile oyuncu sayısına iner.
-  const setMax = (max: number | undefined) => onChange({ min: range?.min ?? 0, max });
+  const cap = Math.max(0, Math.min(limit, players));
+  const [editing, setEditing] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   return (
     <View style={[styles.card, { borderColor: error ? colors.danger.fg : line }]}>
+      <RoleWatermark roleId={roleId} size={104} />
       <View style={styles.head}>
-        <RolePortrait roleId={roleId} size={36} />
+        <RolePortrait roleId={roleId} size={48} />
         <AppText variant="button" numberOfLines={1} style={styles.name}>
           {t.roles[roleId].name}
         </AppText>
-        <TeamIcon size={14} color={fg} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${t.roles[roleId].name}: ${t.game.moreInfo}`}
+          onPress={() => setInfoOpen(true)}
+          hitSlop={8}
+          style={styles.info}
+        >
+          <Info size={16} color={colors.text2} />
+        </Pressable>
       </View>
 
       {range ? (
-        <View style={styles.rangeBox}>
-          <MiniStepper
-            label={t.setup.min}
-            value={String(range.min)}
-            onMinus={range.min > 0 ? () => setMin(range.min - 1) : undefined}
-            onPlus={!full && range.min < Math.min(limit, range.max ?? Infinity) ? () => setMin(range.min + 1) : undefined}
-          />
-          <MiniStepper
-            label={t.setup.max}
-            value={range.max === undefined ? '∞' : String(range.max)}
-            onMinus={
-              range.max === undefined
-                ? () => setMax(Math.min(limit, players))
-                : range.max > range.min
-                  ? () => setMax(range.max! - 1)
-                  : undefined
-            }
-            onPlus={range.max !== undefined ? () => setMax(range.max! + 1 > Math.min(limit, players) ? undefined : range.max! + 1) : undefined}
-          />
-        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${t.setup.rangeEdit}: ${t.setup.rangeSentence(t.roles[roleId].name, range.min, range.max)}`}
+          onPress={() => setEditing(true)}
+          style={({ pressed }) => [styles.rangeBox, pressed && styles.rangePressed]}
+        >
+          <View style={styles.rangeRow}>
+            <Dices size={18} color={colors.text2} />
+            <AppText variant="h2" color={error ? colors.danger.fg : colors.text1} style={styles.rangeValue}>
+              {`${range.min} – ${range.max === undefined ? '∞' : range.max}`}
+            </AppText>
+          </View>
+          <AppText variant="caption" color={colors.text3}>
+            {t.setup.rangeEdit}
+          </AppText>
+        </Pressable>
       ) : (
         <View style={styles.counter}>
-          <StepButton icon="minus" onPress={count > 0 ? () => onChange(count - 1 || undefined) : undefined} />
+          <IconButton icon={Minus} label="−" variant="plain" size={44} onPress={count > 0 ? () => onChange(count - 1) : undefined} />
           <AppText variant="h1" color={error ? colors.danger.fg : isNone ? colors.text3 : colors.text1} style={styles.value}>
             {count}
           </AppText>
-          <StepButton icon="plus" onPress={!full && count < limit ? () => onChange(count + 1) : undefined} />
+          <IconButton icon={Plus} label="+" variant="plain" size={44} onPress={!full && count < limit ? () => onChange(count + 1) : undefined} />
         </View>
       )}
 
       <View style={styles.toggles}>
-        <Toggle label={t.setup.none} selected={isNone} onPress={() => onChange(undefined)} />
+        <Toggle label={t.setup.none} selected={isNone} onPress={() => onChange(0)} />
         <Toggle label={t.setup.random} icon selected={!!range} onPress={() => onChange(range ? slot : { min: 0 })} />
       </View>
+
+      <RoleInfoSheet roleId={roleId} visible={infoOpen} onClose={() => setInfoOpen(false)} />
+      {range ? (
+        <RangeSheet
+          roleId={roleId}
+          visible={editing}
+          min={range.min}
+          max={range.max}
+          limit={cap}
+          full={!!full}
+          onChange={(min, max) => onChange({ min, max })}
+          onClose={() => setEditing(false)}
+        />
+      ) : null}
     </View>
   );
 }
 
-function StepButton({ icon, onPress, size = 'large' }: { icon: 'minus' | 'plus'; onPress?: () => void; size?: 'large' | 'small' }) {
-  const Icon = icon === 'minus' ? Minus : Plus;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={icon === 'minus' ? '−' : '+'}
-      disabled={!onPress}
-      onPress={onPress}
-      style={size === 'large' ? styles.counterBtn : styles.miniBtn}
-    >
-      <Icon size={size === 'large' ? 20 : 16} color={onPress ? colors.text1 : colors.text3} />
-    </Pressable>
-  );
-}
-
-function MiniStepper({ label, value, onMinus, onPlus }: { label: string; value: string; onMinus?: () => void; onPlus?: () => void }) {
-  return (
-    <View style={styles.miniRow}>
-      <AppText variant="caption" color={colors.text2} style={styles.miniLabel} numberOfLines={1}>
-        {label}
-      </AppText>
-      <StepButton icon="minus" size="small" onPress={onMinus} />
-      <AppText variant="button" style={styles.miniValue}>
-        {value}
-      </AppText>
-      <StepButton icon="plus" size="small" onPress={onPlus} />
-    </View>
-  );
-}
 
 function Toggle({ label, icon, selected, onPress }: { label: string; icon?: boolean; selected: boolean; onPress: () => void }) {
   return (
@@ -130,9 +125,19 @@ function Toggle({ label, icon, selected, onPress }: { label: string; icon?: bool
 }
 
 const styles = StyleSheet.create({
-  card: { gap: space[3], padding: space[3], borderRadius: radius.md, borderWidth: 1, backgroundColor: colors.surface1 },
+  card: { gap: space[3], padding: space[3], borderRadius: radius.md, borderWidth: 1, backgroundColor: colors.surface1, overflow: 'hidden' },
   head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   name: { flex: 1 },
+  info: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.lineStrong,
+    backgroundColor: colors.surface2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   counter: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -141,20 +146,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: colors.bg1,
   },
-  counterBtn: { width: 44, height: 76, alignItems: 'center', justifyContent: 'center' },
   value: { fontVariant: ['tabular-nums'] },
   // Rastgele: iki satır (en az / en çok); sabit sayaçla aynı yükseklikte, kart boyu değişmesin.
   rangeBox: {
     height: 76,
-    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
     borderRadius: radius.sm,
     backgroundColor: colors.bg1,
-    paddingLeft: space[2],
+    paddingHorizontal: space[2],
   },
-  miniRow: { flexDirection: 'row', alignItems: 'center', height: 34 },
-  miniLabel: { flex: 1 },
-  miniBtn: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
-  miniValue: { minWidth: 22, textAlign: 'center', fontSize: 16, fontVariant: ['tabular-nums'] },
+  rangePressed: { backgroundColor: colors.surface3 },
+  rangeRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  rangeValue: { fontVariant: ['tabular-nums'] },
   toggles: { flexDirection: 'row', gap: 6 },
   toggle: {
     flex: 1,

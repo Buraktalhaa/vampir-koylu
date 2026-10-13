@@ -1,7 +1,7 @@
 /** Tüm dillerin uyması gereken metin yapısı. Bir metin eksikse TypeScript hata verir. */
-import type { RoleId } from '../game/roles';
-import type { VoteMode } from '../game/settings';
-import type { EffectKind, TeamId } from '../game/types';
+import type { RoleId } from '@/game/roles';
+import type { VoteMode } from '@/game/settings';
+import type { EffectKind, TeamId } from '@/game/types';
 
 export type AbilityText = { name: string; prompt?: string; description?: string };
 
@@ -25,12 +25,20 @@ export type Translation = {
   roles: Record<RoleId, RoleText>;
   quiz: QuizItem[];
   menu: { tagline: string; resume: string; newGame: string; roles: string; settings: string };
-  appSettings: { title: string; language: string };
+  appSettings: {
+    title: string;
+    language: string;
+    soundSection: string;
+    music: { label: string; hint: string };
+    sounds: { label: string; hint: string };
+    vibration: { label: string; hint: string };
+  };
   encyclopedia: {
     title: string;
     all: string;
     abilities: string;
     team: string;
+    classic: string;
     search: string;
     noResults: string;
     noResultsHint: (query: string) => string;
@@ -65,6 +73,16 @@ export type Translation = {
     summaryTitle: string;
     summaryPlayers: string;
     summaryDiscussion: string;
+    rangeEdit: string;
+    rangeTitle: (role: string) => string;
+    rangeFree: string;
+    rangeAtLeastOne: string;
+    rangeAtMostOne: string;
+    rangeExactlyOne: string;
+    unlimited: string;
+    done: string;
+    rangeSentence: (role: string, min: number, max: number | undefined) => string;
+    rangeBalancedVampire: string;
     min: string;
     max: string;
     players: string;
@@ -73,6 +91,7 @@ export type Translation = {
     roles: string;
     random: string;
     allRandom: string;
+    classicMode: string;
     start: string;
     next: string;
     secretVote: { label: string; hint: string };
@@ -95,6 +114,13 @@ export type Translation = {
     rolesAtEnd: string;
     toDiscussion: string;
     seeResult: string;
+    soloWin: (name: string, role: string) => string;
+    seerResult: (name: string) => string;
+    markedTarget: (name: string) => string;
+    revived: (name: string) => string;
+    roleChanged: (from: string, to: string) => string;
+    sameTeam: string;
+    differentTeams: string;
     firstNightIdle: string;
     moreInfo: string;
     discussSub: (alive: number) => string;
@@ -181,6 +207,11 @@ export type Translation = {
     addTime: string;
     endEarly: string;
     abstain: string;
+    menuTitle: string;
+    restart: string;
+    restartTitle: string;
+    restartMessage: string;
+    close: string;
     quitTitle: string;
     quitMessage: string;
     cancel: string;

@@ -1,6 +1,7 @@
-import * as Haptics from 'expo-haptics';
 import { useLayoutEffect, useState, type ReactNode } from 'react';
 import { Animated, LayoutAnimation, PanResponder, StyleSheet, View, type ViewStyle } from 'react-native';
+
+import { hapticTap } from '@/feedback/haptics';
 
 type Props<T> = {
   data: T[];
@@ -37,7 +38,7 @@ export function SortableGrid<T>({ data, keyOf, columns, rowHeight, renderItem, o
     pan.setValue({ x: 0, y: 0 });
     setDrag({ key, order: keys });
     onDragChange?.(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    hapticTap();
   };
 
   const move = (key: string, dx: number, dy: number) => {

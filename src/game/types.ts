@@ -1,8 +1,9 @@
-import type { GameSettings } from './settings';
+import type { GameSettings } from '@/game/settings';
 
 export type PlayerId = string;
 
-export type TeamId = 'village' | 'vampire';
+/** neutral: kendi başına oynayan roller (ör. Deli); her birinin kendi kazanma koşulu var. */
+export type TeamId = 'village' | 'vampire' | 'neutral';
 
 export type Phase = 'night' | 'day';
 
@@ -11,7 +12,7 @@ export type Phase = 'night' | 'day';
  * mevcut efektleri yeniden kullanır; yeni bir mekanik gerekiyorsa
  * `engine/effects.ts` içine tek bir handler eklenir.
  */
-export type EffectKind = 'protect' | 'protectAll' | 'kill' | 'investigate';
+export type EffectKind = 'protect' | 'protectAll' | 'guard' | 'visit' | 'kill' | 'investigate' | 'compare' | 'revive' | 'mark';
 
 export type AbilityTrigger =
   /** Her gece kullanılabilir. */
@@ -26,6 +27,8 @@ export type TargetRule = {
   allowTeammates?: boolean;
   /** Aynı kişiyi art arda iki gece seçemez. Varsayılan: false */
   noRepeatTarget?: boolean;
+  /** Yalnızca ölüleri hedefler (ör. Şaman'ın diriltmesi). */
+  deadOnly?: boolean;
 };
 
 export type Ability = {
@@ -48,6 +51,10 @@ export type Ability = {
   teamVote?: boolean;
   /** İlk gece kullanılamaz. */
   skipFirstNight?: boolean;
+  /** Kaç hedef seçilir (ör. Dedektif: 2). Varsayılan: 1 */
+  targets?: 1 | 2;
+  /** Yalnızca takımında (gizli olmayan) başka yaşayan üye kalmayınca kullanılabilir (ör. Yalnız Vampir). */
+  onlyWhenTeamGone?: boolean;
   /** Pas geçilemez; oyuncu mutlaka bir hedef seçer (ör. vampir ısırığı). */
   required?: boolean;
 };
@@ -58,8 +65,18 @@ export type RoleDefinition<Id extends string = string> = {
   abilities: readonly Ability[];
   /** Takım arkadaşlarını oyun başında görür. */
   knowsTeammates?: boolean;
-  /** Araştırıldığında farklı bir rol olarak görünür (ileride: gizli roller). */
-  appearsAs?: string;
+  /** Kâhin gibi araştıran rollere farklı bir takım olarak görünür (ileride: gizli roller). */
+  appearsAs?: TeamId;
+  /** Gündüz oylamasında oyu kaç sayılır (ör. Belediye Başkanı: 2). Varsayılan: 1 */
+  voteWeight?: number;
+  /** Bu yetenekle işaretlediği oyuncu ölünce onun rolünü alır (ör. Rol Çalan: 'mark'). */
+  stealsRoleVia?: string;
+  /** Takım arkadaşları onu tanımaz, o da onları (ör. Yalnız Vampir). */
+  hiddenFromTeam?: boolean;
+  /** Vampirler ısırınca ölmez, bu role dönüşür (ör. Lanetli → vampire). */
+  convertsWhenBitten?: string;
+  /** Köy tarafından asılırsa tek başına kazanır ve oyun biter (ör. Deli). */
+  winsIfLynched?: boolean;
   /** Bir gecede kullanılabilecek en fazla yetenek sayısı. Varsayılan: 1 */
   maxNightActions?: number;
   /** Oyunda en fazla 1 tane olabilir. */
@@ -80,16 +97,22 @@ export type Player = {
   roleId: string;
   alive: boolean;
   abilityState: Record<string, AbilityState>;
+  /** Oyun sırasında rol değiştirdiyse önceki rolü (ör. ısırılan Lanetli). */
+  convertedFrom?: string;
 };
 
-export type DeathCause = 'vampire' | 'lynch' | 'spell' | 'revenge' | 'ability';
+/** sacrifice: başkasının yerine öldü (Fedai) · visit: misafir gittiği evde öldü (Gece Misafiri) */
+export type DeathCause = 'vampire' | 'lynch' | 'spell' | 'revenge' | 'sacrifice' | 'visit' | 'ability';
 
 export type EventBody =
   | { type: 'death'; playerId: PlayerId; cause: DeathCause; by?: PlayerId }
   | { type: 'saved'; playerId: PlayerId }
-  | { type: 'investigated'; actorId: PlayerId; targetId: PlayerId; seenRoleId: string }
+  | { type: 'revived'; playerId: PlayerId; by: PlayerId }
+  | { type: 'converted'; playerId: PlayerId; fromRoleId: string; toRoleId: string }
+  | { type: 'investigated'; actorId: PlayerId; targetId: PlayerId; seenTeam: TeamId }
   /** Kullanılan yetenek (oyun sonu özeti için). Takım oylarında her oyuncunun seçimi ayrı kaydedilir. */
-  | { type: 'ability'; actorId: PlayerId; abilityId: string; targetId?: PlayerId };
+  | { type: 'ability'; actorId: PlayerId; abilityId: string; targetId?: PlayerId; secondTargetId?: PlayerId }
+  | { type: 'compared'; actorId: PlayerId; targetId: PlayerId; secondTargetId: PlayerId; sameTeam: boolean };
 
 /** Her olay hangi tur ve fazda olduğunu taşır. */
 export type GameEvent = EventBody & { round: number; phase: Phase };
@@ -109,6 +132,8 @@ export type GameState = {
   /** Kullanıcı girdisi bekleyen tetiklenmiş yetenekler (ör. asılan İntikamcı'nın seçimi). */
   pendingTriggers: PendingTrigger[];
   winner: TeamId | null;
+  /** Tek başına kazananlar (ör. asılan Deli). Takım galibiyetinde boş. */
+  winners?: PlayerId[];
 };
 
 export type ActionSubmission = {
@@ -116,6 +141,8 @@ export type ActionSubmission = {
   abilityId: string;
   /** Hedefsiz yeteneklerde boş bırakılır. */
   targetId?: PlayerId;
+  /** İki hedefli yeteneklerde ikinci hedef (ör. Dedektif). */
+  secondTargetId?: PlayerId;
 };
 
 export type Rng = () => number;

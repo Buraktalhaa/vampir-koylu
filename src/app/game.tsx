@@ -1,9 +1,7 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { router } from 'expo-router';
-import { X } from 'lucide-react-native';
 import { useCallback, useEffect } from 'react';
-import { Alert, BackHandler, Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Alert, BackHandler, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
@@ -16,30 +14,41 @@ import { OpenVote } from '@/components/game/OpenVote';
 import { Avenged, RevengePick } from '@/components/game/Revenge';
 import { SecretVote } from '@/components/game/SecretVote';
 import { Verdict } from '@/components/game/Verdict';
+import { GameMenu } from '@/components/game/GameMenu';
 import {
-  type ActionSubmission,
   alivePlayers,
   countVotes,
+  createGame,
   deathsSince,
   findPlayer,
-  type GameState,
-  type PlayerId,
   resolveDayVote,
   resolveDayVoteCounts,
   resolveNight,
   resolveTrigger,
   skipNight,
   skipTrigger,
+  type ActionSubmission,
+  type GameState,
+  type PlayerId,
 } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { useGame } from '@/store/GameProvider';
 import type { Flow, Session, Stage } from '@/store/session';
-import { colors, radius, space } from '@/theme/tokens';
+import { useMusic } from '@/feedback/AppSettingsProvider';
+import { playSound } from '@/feedback/audio';
 
 export default function GameScreen() {
   const { t } = useLanguage();
-  const { session, updateSession, endSession } = useGame();
+  const { session, updateSession, endSession, startSession, draft } = useGame();
   useKeepAwake();
+
+  const quit = useCallback(() => {
+    endSession();
+    router.replace('/');
+  }, [endSession]);
+
+  // Aynı oyuncular, aynı karakter dağılımı ve ayarlarla roller yeniden dağıtılır.
+  const restart = () => startSession(createGame(draft.names, draft.setup, draft.settings));
 
   const confirmQuit = useCallback(() => {
     Alert.alert(t.game.quitTitle, t.game.quitMessage, [
@@ -47,13 +56,10 @@ export default function GameScreen() {
       {
         text: t.game.quit,
         style: 'destructive',
-        onPress: () => {
-          endSession();
-          router.replace('/');
-        },
+        onPress: quit,
       },
     ]);
-  }, [t, endSession]);
+  }, [t, quit]);
 
   // Android geri tuşu oyunu onaysız kapatmasın.
   useEffect(() => {
@@ -71,26 +77,11 @@ export default function GameScreen() {
   return (
     <View style={styles.root}>
       <GameFlow session={session} update={updateSession} onLeave={endSession} />
-      {session.flow.stage !== 'end' ? <QuitButton onPress={confirmQuit} /> : null}
+      {session.flow.stage !== 'end' ? <GameMenu onRestart={restart} onQuit={quit} /> : null}
     </View>
   );
 }
 
-function QuitButton({ onPress }: { onPress: () => void }) {
-  const { t } = useLanguage();
-  const insets = useSafeAreaInsets();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={t.game.quit}
-      onPress={onPress}
-      hitSlop={8}
-      style={[styles.quit, { top: insets.top + space[3] }]}
-    >
-      <X size={18} color={colors.text3} />
-    </Pressable>
-  );
-}
 
 type FlowProps = {
   session: Session;
@@ -105,6 +96,7 @@ function GameFlow({ session, update, onLeave }: FlowProps) {
   const { stage, queue, turn, shown, submissions, votes, eventsFrom, tally } = flow;
 
   const turnPlayer = queue[turn] ? findPlayer(game, queue[turn]) : undefined;
+  useMusic(stage === 'reveal' || stage === 'night' ? 'night' : stage === 'end' ? 'menu' : 'day');
   const turnLabel = t.game.turnOf(turn + 1, queue.length);
 
   const set = (patch: Partial<Flow>, nextGame?: GameState) =>
@@ -167,7 +159,17 @@ function GameFlow({ session, update, onLeave }: FlowProps) {
   }
 
   if (stage === 'morning') {
-    return <MorningReport game={game} deaths={deathsSince(game, eventsFrom)} onDone={() => set({ stage: game.winner ? 'end' : 'discussion' })} />;
+    const revived = game.events
+      .slice(eventsFrom)
+      .flatMap((e) => (e.type === 'revived' ? [findPlayer(game, e.playerId)] : []));
+    return (
+      <MorningReport
+        game={game}
+        deaths={deathsSince(game, eventsFrom)}
+        revived={revived}
+        onDone={() => set({ stage: game.winner ? 'end' : 'discussion' })}
+      />
+    );
   }
 
   if (stage === 'discussion') {
@@ -178,7 +180,10 @@ function GameFlow({ session, update, onLeave }: FlowProps) {
         key={game.round}
         game={game}
         voteToday={voteToday}
-        onVote={() => beginStage('vote', game)}
+        onVote={() => {
+          playSound('vote');
+          beginStage('vote', game);
+        }}
         onNight={() => toNight(resolveDayVote(game, {}))}
       />
     );
@@ -243,14 +248,4 @@ function GameFlow({ session, update, onLeave }: FlowProps) {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  quit: {
-    position: 'absolute',
-    right: space[4],
-    width: 32,
-    height: 32,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });

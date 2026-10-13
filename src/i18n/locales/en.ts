@@ -1,10 +1,11 @@
-import type { Translation } from '../types';
+import type { Translation } from '@/i18n/types';
 
 export const en: Translation = {
   languageName: 'English',
   teams: {
     village: { name: 'Village', goal: 'Find every vampire and drive them out.' },
     vampire: { name: 'Vampires', goal: 'Equal or outnumber the villagers.' },
+    neutral: { name: 'Neutral', goal: 'Meet your own win condition; you are on nobody\'s team.' },
   },
   quiz: [
     { q: 'Which water is best?', a: 'Sparkling', b: 'Still' },
@@ -64,14 +65,85 @@ export const en: Translation = {
       description: 'If the village hangs you, you take one more player down with you.',
       abilities: { revenge: { name: 'Revenge', prompt: 'Who will you take with you?', description: 'If the village hangs you, you take one more player down with you.' } },
     },
+    seer: {
+      name: 'Seer',
+      tip: "Each night pick a player and instantly learn whether they are Village, Vampires or Neutral. Think hard about how and when to share it by day: reveal yourself and you become the vampires' first target.",
+      description: "Each night you learn one player's team.",
+      abilities: { divine: { name: 'Vision', prompt: "Whose team do you want to learn?", description: "You learn the chosen player's team (Village / Vampires / Neutral)." } },
+    },
+    mayor: {
+      name: 'Mayor',
+      tip: "Your vote counts twice in the day vote. In secret voting this is counted automatically and nobody notices. In open voting you have to say your vote counts twice, which reveals you as the mayor.",
+      idle: "Nothing to do tonight. Your vote will weigh heavy tomorrow.",
+      description: 'Your vote counts twice in the day vote.',
+    },
+    jester: {
+      name: 'Jester',
+      tip: "If the village hangs you, you win alone and the game ends. Act suspicious, but not too obviously; if the vampires kill you at night you can't win. If any other team wins, you lose.",
+      idle: "Nothing to do tonight. Tomorrow, convince them to hang you.",
+      description: 'If the village hangs you, you win alone.',
+    },
+    bodyguard: {
+      name: 'Bodyguard',
+      tip: "Each night you guard another player. If they are attacked that night (vampires or a curse), you die in their place and they live. If the Healer protects you, you survive too. You can't guard yourself.",
+      description: "Each night you guard someone; if they are attacked, you die in their place.",
+      abilities: { guard: { name: 'Sacrifice', prompt: 'Whose place are you willing to die in tonight?', description: 'You take the attack meant for the chosen player: they live, you die.' } },
+    },
+    visitor: {
+      name: 'Night Guest',
+      tip: "Each night you visit another player's home. If your own home is attacked that night, you survive because you're not there. But if your host is a vampire or is attacked that night, you die too. Choose your host wisely.",
+      description: "Each night you visit someone; you dodge attacks on your home, but die in a dangerous one.",
+      abilities: { visit: { name: 'Visit', prompt: 'Whose home are you visiting tonight?', description: "You're not home tonight. If your host is a vampire or is attacked, you die too." } },
+    },
+    detective: {
+      name: 'Detective',
+      tip: "Each night you pick two living players and instantly learn whether they are on the same team. It doesn't tell you which team, only same or different. You can't pick yourself.",
+      description: 'Each night you learn whether two players are on the same team.',
+      abilities: { compare: { name: 'Investigation', prompt: 'Which two players will you compare?', description: 'You learn whether the two chosen players are on the same team.' } },
+    },
+    loneVampire: {
+      name: 'Lone Vampire',
+      tip: "You're on the vampire team, but nobody knows: the other vampires don't know you and you don't know them. While they live, you're like a villager with nothing to do at night. When all other vampires are dead you awaken and bite someone each night. The Seer sees you as a villager.",
+      description: "You act like a villager until the other vampires die; then you start biting.",
+      idle: "The other vampires are still alive. Act like a villager and bide your time.",
+      abilities: { bite: { name: 'Lone Bite', prompt: "You're alone now. Who will you bite tonight?", description: 'Unlocks when all other vampires are dead; you bite one player each night.' } },
+    },
+    cursed: {
+      name: 'Cursed',
+      tip: "You're an ordinary villager with a curse in your blood. If the vampires bite you at night you don't die, you turn into a vampire: you join their team, know them and bite with them. If the Healer protects you or a Bodyguard dies for you, you don't turn.",
+      description: "You're a villager; if the vampires bite you, you turn into a vampire instead of dying.",
+      idle: "Nothing to do tonight. Hopefully nobody knocks on your door…",
+    },
+    shaman: {
+      name: 'Shaman',
+      tip: "Once per game you can bring a dead player back to life. They return in the morning with their role and remaining abilities. With nobody dead there's nothing to do; save it for the right moment.",
+      description: "Once per game you revive a dead player.",
+      idle: "Nobody to revive tonight, or you've already used your power.",
+      abilities: { raise: { name: 'Spirit Call', prompt: 'Whom will you call back from the dead?', description: 'The chosen dead player returns to life in the morning with their role. Once per game.' } },
+    },
+    thief: {
+      name: 'Role Thief',
+      tip: "Once per game you mark a player. However they die (night attack, vote, revenge), you take their role and team; mark a vampire and you become one. If the game ends before you take a role, you lose. Don't tell anyone who you marked.",
+      description: 'You mark a player; when they die, you take their role.',
+      idle: 'Your mark is set. When your target dies, their role is yours.',
+      abilities: { mark: { name: 'Mark', prompt: 'Whose role do you want to steal?', description: "When the chosen player dies, you take their role and team. Once per game." } },
+    },
   },
   menu: { tagline: 'Strange things are happening in this village…', resume: 'Resume game', newGame: 'New Game', roles: 'Characters', settings: 'Settings' },
-  appSettings: { title: 'Settings', language: 'Language' },
+  appSettings: {
+    title: 'Settings',
+    language: 'Language',
+    soundSection: 'Sound & vibration',
+    music: { label: 'Music', hint: 'Background music in the menu, at night and during the day.' },
+    sounds: { label: 'Sound effects', hint: 'Short effects such as the sound when voting starts.' },
+    vibration: { label: 'Vibration', hint: 'A light buzz when time is up and when dragging players.' },
+  },
   encyclopedia: {
     title: 'Characters',
     all: 'All',
     abilities: 'Abilities',
     team: 'Team',
+    classic: 'Classic characters',
     search: 'Search name or ability',
     noResults: 'No results',
     noResultsHint: (query) => `No character found for “${query}”.`,
@@ -87,7 +159,7 @@ export const en: Translation = {
     noTarget: 'No target',
     self: 'Self allowed',
     noRepeat: 'No repeat target',
-    effects: { protect: 'Protection', protectAll: 'Protection', kill: 'Kill', investigate: 'Info' },
+    effects: { protect: 'Protection', protectAll: 'Protection', guard: 'Sacrifice', visit: 'Visit', kill: 'Kill', investigate: 'Info', compare: 'Comparison', revive: 'Revival', mark: 'Mark' },
   },
   common: { back: 'Back' },
   setup: {
@@ -106,6 +178,25 @@ export const en: Translation = {
     summaryTitle: 'Summary',
     summaryPlayers: 'Players',
     summaryDiscussion: 'Discussion',
+    rangeEdit: 'Set range',
+    rangeTitle: (role) => `How many ${role}?`,
+    rangeFree: 'Any',
+    rangeAtLeastOne: 'At least 1',
+    rangeAtMostOne: 'At most 1',
+    rangeExactlyOne: 'Exactly 1',
+    unlimited: 'No limit',
+    done: 'Done',
+    rangeBalancedVampire: 'The number of vampires follows the player count: about 1 per 4 players (in small games almost always 1).',
+    rangeSentence: (role, min, max) =>
+      max === undefined
+        ? min === 0
+          ? `There may be no ${role}, or more than one.`
+          : `At least ${min} ${role}; any more is random.`
+        : min === max
+          ? `Exactly ${min} ${role} in the game.`
+          : min === 0
+            ? `At most ${max} ${role}; there may be none.`
+            : `Between ${min} and ${max} ${role} in the game.`,
     min: 'Min',
     max: 'Max',
     players: 'Players',
@@ -113,6 +204,7 @@ export const en: Translation = {
     add: 'Add',
     roles: 'Characters',
     random: 'Random',
+    classicMode: 'Classic Mode',
     allRandom: 'All Random',
     start: 'Start Game',
     next: 'Next',
@@ -138,6 +230,13 @@ export const en: Translation = {
     leftGame: (name, alive) => `${name} is out of the game. The phone continues with ${alive} players.`,
     rolesAtEnd: 'Roles will be revealed at the end.',
     toDiscussion: 'Go to discussion',
+    soloWin: (name, role) => `${name} (${role}) wins alone!`,
+    sameTeam: 'Same team',
+    differentTeams: 'Different teams',
+    revived: (name) => `${name} has been revived!`,
+    roleChanged: (from, to) => `Your role changed: you were ${from}, now you are ${to}.`,
+    markedTarget: (name) => `Your mark: ${name}`,
+    seerResult: (name) => `${name} is on this team:`,
     seeResult: 'See the result',
     firstNightIdle: 'Abilities are off on the first night. Tonight you only learn your role.',
     moreInfo: 'Detailed description',
@@ -226,6 +325,11 @@ export const en: Translation = {
     endEarly: 'End early',
     skipVote: 'Skip vote',
     toNight: 'Go to night',
+    menuTitle: 'Game menu',
+    restart: 'Restart game',
+    restartTitle: 'Restart the game?',
+    restartMessage: 'Roles are dealt again with the same players; this game is deleted.',
+    close: 'Close',
     quitTitle: 'Quit the game?',
     quitMessage: 'This game will be deleted and cannot be restored.',
     cancel: 'Cancel',

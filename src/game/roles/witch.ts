@@ -1,4 +1,4 @@
-import { defineRole } from './defineRole';
+import { defineRole } from '@/game/roles/defineRole';
 
 /**
  * Büyücü: iki tek kullanımlık büyüsü var, bir gecede en fazla birini kullanır.

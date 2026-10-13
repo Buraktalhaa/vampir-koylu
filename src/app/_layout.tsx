@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AppSettingsProvider } from '@/feedback/AppSettingsProvider';
 import { LanguageProvider } from '@/i18n/LanguageProvider';
 import { GameProvider } from '@/store/GameProvider';
 import { colors } from '@/theme/tokens';
@@ -32,6 +33,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <LanguageProvider>
+        <AppSettingsProvider>
         <GameProvider>
         <StatusBar style="light" />
         <Stack
@@ -41,6 +43,7 @@ export default function RootLayout() {
           }}
         />
         </GameProvider>
+        </AppSettingsProvider>
       </LanguageProvider>
     </SafeAreaProvider>
   );

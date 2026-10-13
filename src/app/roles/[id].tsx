@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft, Search, Shield, Skull, Sparkles } from 'lucide-react-native';
+import { ChevronLeft, Crosshair, DoorOpen, GitCompare, HeartPulse, Search, Shield, ShieldHalf, Skull, Sparkles } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/AppText';
@@ -11,12 +11,18 @@ import { abilityTags } from '@/i18n/abilityTags';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { colors, radius, space, touch } from '@/theme/tokens';
 import { Chip, ChipRow } from '@/components/ui/Chip';
+import { SectionLabel } from '@/components/ui/SectionLabel';
 
 const EFFECT_ICON: Record<EffectKind, { icon: typeof Shield; fg: string; bg: string }> = {
   protect: { icon: Shield, fg: colors.info.fg, bg: colors.info.bg },
   protectAll: { icon: Shield, fg: colors.info.fg, bg: colors.info.bg },
+  guard: { icon: ShieldHalf, fg: colors.info.fg, bg: colors.info.bg },
+  visit: { icon: DoorOpen, fg: colors.warning.fg, bg: colors.warning.bg },
   kill: { icon: Skull, fg: colors.danger.fg, bg: colors.team.vampire.bg },
   investigate: { icon: Search, fg: colors.warning.fg, bg: colors.warning.bg },
+  compare: { icon: GitCompare, fg: colors.warning.fg, bg: colors.warning.bg },
+  revive: { icon: HeartPulse, fg: colors.success.fg, bg: colors.success.bg },
+  mark: { icon: Crosshair, fg: colors.team.neutral.fg, bg: colors.team.neutral.bg },
 };
 
 export default function RoleDetail() {
@@ -58,9 +64,7 @@ export default function RoleDetail() {
       />
       {role.abilities.length > 0 ? (
         <>
-          <AppText variant="caption" color={colors.text3}>
-            {t.encyclopedia.abilities.toLocaleUpperCase('tr')}
-          </AppText>
+          <SectionLabel>{t.encyclopedia.abilities}</SectionLabel>
           <View style={styles.abilities}>
             {role.abilities.map((ability, i) => {
               const visual = EFFECT_ICON[ability.effect] ?? { icon: Sparkles, fg: colors.text2, bg: colors.surface2 };

@@ -1,4 +1,4 @@
-import { HandHeart, Swords, WandSparkles, Wheat } from 'lucide-react-native';
+import { Biohazard, Crown, DoorOpen, Drama, Eye, Feather, HandHeart, MoonStar, ScanSearch, ShieldHalf, Swords, VenetianMask, WandSparkles, Wheat } from 'lucide-react-native';
 
 import { BatIcon } from '@/components/icons/BatIcon';
 import type { Icon } from '@/components/icons/types';
@@ -11,4 +11,14 @@ export const ROLE_ICONS: Record<RoleId, Icon> = {
   witch: WandSparkles,
   healer: HandHeart,
   avenger: Swords,
+  seer: Eye,
+  mayor: Crown,
+  jester: Drama,
+  bodyguard: ShieldHalf,
+  visitor: DoorOpen,
+  detective: ScanSearch,
+  loneVampire: MoonStar,
+  cursed: Biohazard,
+  shaman: Feather,
+  thief: VenetianMask,
 };

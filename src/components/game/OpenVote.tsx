@@ -8,7 +8,7 @@ import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { Screen } from '@/components/ui/Screen';
 import { Stepper } from '@/components/ui/Stepper';
 import { PhaseHeader } from '@/components/game/PhaseHeader';
-import { alivePlayers, type GameState, type PlayerId } from '@/game';
+import { alivePlayers, getRole, type GameState, type PlayerId } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { colors, phases, radius, space } from '@/theme/tokens';
 import { Chip } from '@/components/ui/Chip';
@@ -18,6 +18,8 @@ export function OpenVote({ game, onDone }: { game: GameState; onDone: (counts: R
   const { t } = useLanguage();
   const [counts, setCounts] = useState<Record<PlayerId, number>>({});
   const alive = alivePlayers(game);
+  // Toplam verilebilecek oy: her yaşayanın oy ağırlığı (ör. Belediye Başkanı 2).
+  const totalVotes = alive.reduce((sum, p) => sum + (getRole(p.roleId).voteWeight ?? 1), 0);
   const given = Object.values(counts).reduce((a, b) => a + b, 0);
   const max = Math.max(0, ...Object.values(counts));
   const leaders = alive.filter((p) => max > 0 && counts[p.id] === max);
@@ -39,15 +41,15 @@ export function OpenVote({ game, onDone }: { game: GameState; onDone: (counts: R
       <AppText variant="h1">{t.game.openTitle}</AppText>
       <View style={styles.sectionHead}>
         <AppText variant="small" color={colors.text2}>
-          {t.game.votesGiven(given, alive.length)}
+          {t.game.votesGiven(given, totalVotes)}
         </AppText>
         {tie ? (
           <AppText variant="small" color={colors.warning.fg}>
             {t.game.tie}
           </AppText>
-        ) : given < alive.length ? (
+        ) : given < totalVotes ? (
           <AppText variant="small" color={phases.day.accent}>
-            {t.game.notVoted(alive.length - given)}
+            {t.game.notVoted(totalVotes - given)}
           </AppText>
         ) : null}
       </View>
@@ -83,7 +85,7 @@ export function OpenVote({ game, onDone }: { game: GameState; onDone: (counts: R
                   onMinus={() => change(p.id, -1)}
                   onPlus={() => change(p.id, 1)}
                   minusDisabled={n === 0}
-                  plusDisabled={given >= alive.length}
+                  plusDisabled={given >= totalVotes}
                 />
               </View>
             </View>

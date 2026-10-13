@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SettingSwitch } from '@/components/ui/SettingSwitch';
+import { SettingsGroup } from '@/components/ui/SettingsGroup';
+import { SectionLabel } from '@/components/ui/SectionLabel';
 import { createGame } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { useGame } from '@/store/GameProvider';
@@ -33,7 +35,7 @@ export default function SettingsStep() {
   return (
     <Screen footer={<Button label={t.setup.start} icon={Moon} onPress={start} />}>
       <ScreenHeader title={t.gameSettings.title} step={[3, 3]} stepLabel={t.setup.step(3, 3)} />
-      <View style={styles.group}>
+      <SettingsGroup>
         <SettingSwitch
           bare
           label={t.gameSettings.firstNightActions.label}
@@ -41,7 +43,6 @@ export default function SettingsStep() {
           value={settings.firstNightActions}
           onChange={(v) => set({ firstNightActions: v })}
         />
-        <View style={styles.divider} />
         <SettingSwitch
           bare
           label={t.gameSettings.revealRoleOnDeath.label}
@@ -49,7 +50,6 @@ export default function SettingsStep() {
           value={settings.revealRoleOnDeath}
           onChange={(v) => set({ revealRoleOnDeath: v })}
         />
-        <View style={styles.divider} />
         <SettingSwitch
           bare
           label={t.setup.secretVote.label}
@@ -57,11 +57,9 @@ export default function SettingsStep() {
           value={settings.voteMode === 'secret'}
           onChange={(v) => set({ voteMode: v ? 'secret' : 'open' })}
         />
-      </View>
+      </SettingsGroup>
 
-      <AppText variant="caption" color={colors.text3}>
-        {t.setup.summaryTitle.toLocaleUpperCase('tr')}
-      </AppText>
+      <SectionLabel>{t.setup.summaryTitle}</SectionLabel>
       <View style={[styles.group, styles.summary]}>
         <SummaryRow label={t.setup.summaryPlayers} value={String(names.length)} />
         <SummaryRow label={t.setup.summaryDiscussion} value={formatTime(settings.discussionSeconds)} />
@@ -83,7 +81,6 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   group: { borderRadius: radius.lg - 4, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface1, overflow: 'hidden' },
-  divider: { height: 1, backgroundColor: colors.line },
   summary: { padding: space[4], gap: space[3] },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: space[4] },
   value: { flex: 1, textAlign: 'right' },

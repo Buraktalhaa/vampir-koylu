@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { colors, radius, space } from '@/theme/tokens';
 
-import { AppText } from './AppText';
+import { AppText } from '@/components/ui/AppText';
 
 type Props = {
   label: string | number;

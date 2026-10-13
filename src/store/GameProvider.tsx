@@ -2,10 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { allRandomSetup, type RoleSetup } from '@/game/engine/setup';
+import { ROLE_IDS } from '@/game/roles';
 import { DEFAULT_SETTINGS, type GameSettings } from '@/game/settings';
 import type { GameState } from '@/game/types';
 
-import { newSession, resumeSafely, type Session } from './session';
+import { newSession, resumeSafely, type Session } from '@/store/session';
 
 /** Kurulum adımları (oyuncular → karakterler → ayarlar) arasında paylaşılan taslak. */
 export type GameDraft = {
@@ -37,13 +38,24 @@ function defaultDraft(): GameDraft {
   return { names: [], setup: allRandomSetup(), settings: DEFAULT_SETTINGS };
 }
 
+/**
+ * Kayıtta hiç geçmeyen karakterler (kayıttan sonra oyuna eklenenler) Rastgele başlar.
+ * "Yok" kayıtta 0 olarak tutulduğu için bilinçli "Yok" seçimiyle karışmaz.
+ */
+function withNewRoles(saved: RoleSetup | undefined): RoleSetup {
+  if (!saved) return allRandomSetup();
+  const setup: RoleSetup = { ...saved };
+  for (const id of ROLE_IDS) if (!(id in setup)) setup[id] = { min: 0 };
+  return setup;
+}
+
 /** Kayıtlı taslak eski sürümden kalmış olabilir; eksik alanlar varsayılanla tamamlanır. */
 function restoreDraft(raw: string): GameDraft {
   const saved = JSON.parse(raw) as Partial<GameDraft> & { settingsVersion?: number };
   const base = defaultDraft();
   return {
     names: Array.isArray(saved.names) ? saved.names : base.names,
-    setup: saved.setup ?? base.setup,
+    setup: withNewRoles(saved.setup),
     settings: saved.settingsVersion === SETTINGS_VERSION ? { ...base.settings, ...saved.settings } : base.settings,
   };
 }
