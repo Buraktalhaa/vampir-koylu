@@ -5,6 +5,10 @@ import { Pressable, StyleSheet } from 'react-native';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
+import { SettingSwitch } from '@/components/ui/SettingSwitch';
+import { SettingsGroup } from '@/components/ui/SettingsGroup';
+import { SectionLabel } from '@/components/ui/SectionLabel';
+import { useAppSettings } from '@/feedback/AppSettingsProvider';
 import { LOCALES, type Language } from '@/i18n';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { colors, DEFAULT_PHASE, phases, radius, space, touch } from '@/theme/tokens';
@@ -13,12 +17,11 @@ const accent = phases[DEFAULT_PHASE];
 
 export default function Settings() {
   const { t, language, setLanguage } = useLanguage();
+  const { settings, update } = useAppSettings();
 
   return (
     <Screen title={t.appSettings.title} footer={<Button label={t.common.back} variant="secondary" onPress={() => router.back()} />}>
-      <AppText variant="caption" color={colors.text3}>
-        {t.appSettings.language}
-      </AppText>
+      <SectionLabel>{t.appSettings.language}</SectionLabel>
       {(Object.keys(LOCALES) as Language[]).map((code) => {
         const selected = code === language;
         return (
@@ -34,6 +37,31 @@ export default function Settings() {
           </Pressable>
         );
       })}
+
+      <SectionLabel style={styles.section}>{t.appSettings.soundSection}</SectionLabel>
+      <SettingsGroup>
+        <SettingSwitch
+          bare
+          label={t.appSettings.music.label}
+          hint={t.appSettings.music.hint}
+          value={settings.music}
+          onChange={(music) => update({ music })}
+        />
+        <SettingSwitch
+          bare
+          label={t.appSettings.sounds.label}
+          hint={t.appSettings.sounds.hint}
+          value={settings.sounds}
+          onChange={(sounds) => update({ sounds })}
+        />
+        <SettingSwitch
+          bare
+          label={t.appSettings.vibration.label}
+          hint={t.appSettings.vibration.hint}
+          value={settings.vibration}
+          onChange={(vibration) => update({ vibration })}
+        />
+      </SettingsGroup>
     </Screen>
   );
 }
@@ -51,4 +79,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface1,
   },
   optionSelected: { borderWidth: 2, borderColor: accent.accent, backgroundColor: accent.selectBg },
+  section: { marginTop: space[3] },
 });
