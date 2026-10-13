@@ -15,6 +15,16 @@ describe.each(Object.entries(LOCALES))('Çeviri: %s', (_, t) => {
     }
   });
 
+  it('hiçbir metinde TODO kalmamış (yeni karakter iskeleti doldurulmuş)', () => {
+    const todos: string[] = [];
+    const walk = (value: unknown, path: string) => {
+      if (typeof value === 'string' && value.includes('TODO')) todos.push(path);
+      else if (value && typeof value === 'object') for (const [k, v] of Object.entries(value)) walk(v, `${path}.${k}`);
+    };
+    walk(t.roles, 'roles');
+    expect(todos).toEqual([]);
+  });
+
   it('20 tane iki seçenekli soru var', () => {
     expect(t.quiz).toHaveLength(20);
     for (const q of t.quiz) expect(q.q && q.a && q.b).toBeTruthy();

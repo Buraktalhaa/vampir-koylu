@@ -1,4 +1,4 @@
-import { ChevronRight, Info, Sun } from 'lucide-react-native';
+import { ChevronRight, HeartPulse, Info, Sun } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/AppText';
@@ -6,18 +6,23 @@ import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { DeathCard } from '@/components/game/DeathCard';
 import { PhaseHeader } from '@/components/game/PhaseHeader';
-import { alivePlayers, type DeathEvent, findPlayer, type GameState, publicRoleOf, type RoleId } from '@/game';
+import { alivePlayers, findPlayer, publicRoleOf, type DeathEvent, type GameState, type Player, type RoleId } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { colors, phases, radius, space } from '@/theme/tokens';
 
 import { InfoBand } from '@/components/ui/InfoBand';
 
-export function MorningReport({ game, deaths, onDone }: { game: GameState; deaths: DeathEvent[]; onDone: () => void }) {
+type Props = { game: GameState; deaths: DeathEvent[]; /** Bu gece dirilenler (ör. Şaman). */ revived?: Player[]; onDone: () => void };
+
+export function MorningReport({ game, deaths, revived = [], onDone }: Props) {
   const { t } = useLanguage();
   const alive = alivePlayers(game).length;
   return (
     <Screen phase="day" footer={<Button label={game.winner ? t.game.seeResult : t.game.toDiscussion} phase="day" trailingIcon={ChevronRight} onPress={onDone} />}>
       <PhaseHeader icon={Sun} phase="day" title={t.game.day(game.round)} subtitle={t.game.morningSub} />
+      {revived.map((p) => (
+        <InfoBand key={p.id} icon={HeartPulse} tone="success" text={t.game.revived(p.name)} />
+      ))}
       {deaths.length === 0 ? (
         <View style={styles.nobody}>
           <View style={styles.sunOrb} />

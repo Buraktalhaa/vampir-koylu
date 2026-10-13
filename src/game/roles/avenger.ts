@@ -1,4 +1,4 @@
-import { defineRole } from './defineRole';
+import { defineRole } from '@/game/roles/defineRole';
 
 /** İntikamcı: köy tarafından asılırsa yanında bir oyuncuyu daha götürür. */
 export const avenger = defineRole({

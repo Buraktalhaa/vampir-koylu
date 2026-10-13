@@ -15,6 +15,11 @@ export function GameOver({ game, onLeave }: { game: GameState; onLeave: () => vo
   const { t } = useLanguage();
   const winner = game.winner ?? 'village';
   const phase: Phase = winner === 'vampire' ? 'night' : 'day';
+  // Tek başına kazanan (ör. asılan Deli) varsa başlıkta adı ve rolü yazar.
+  const solo = game.winners?.map((id) => findPlayer(game, id)) ?? [];
+  const title = solo.length
+    ? solo.map((p) => t.game.soloWin(p.name, t.roles[p.roleId as RoleId].name)).join('\n')
+    : t.game.wins(t.teams[winner].name);
   const leave = (to: '/new-game' | '/') => {
     onLeave();
     router.replace(to);
@@ -30,7 +35,7 @@ export function GameOver({ game, onLeave }: { game: GameState; onLeave: () => vo
       }
     >
       <AppText variant="display" style={[styles.center, styles.winTitle]}>
-        {t.game.wins(t.teams[winner].name)}
+        {title}
       </AppText>
       {game.players.map((p) => (
         <View key={p.id} style={styles.endRow}>
@@ -58,7 +63,8 @@ export function Timeline({ game }: { game: GameState }) {
       case 'ability': {
         const roleId = findPlayer(game, e.actorId).roleId as RoleId;
         const ability = t.roles[roleId].abilities?.[e.abilityId]?.name ?? e.abilityId;
-        return t.game.usedAbility(`${name(e.actorId)} (${roleName(e.actorId)})`, ability, e.targetId ? name(e.targetId) : undefined);
+        const targets = [e.targetId, e.secondTargetId].filter(Boolean).map((id) => name(id)).join(' & ');
+        return t.game.usedAbility(`${name(e.actorId)} (${roleName(e.actorId)})`, ability, targets || undefined);
       }
       case 'saved':
         return t.game.saved(name(e.playerId));

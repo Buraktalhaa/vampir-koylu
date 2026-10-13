@@ -1,29 +1,33 @@
 import { Moon } from 'lucide-react-native';
 import { useState } from 'react';
 
-import type { PickerItem } from '@/components/player/PlayerPicker';
+import { Idle } from '@/components/game/IdleTurn';
 import { PhaseHeader } from '@/components/game/PhaseHeader';
+import { RoleSummary } from '@/components/game/RoleSummary';
+import { CompareResult } from '@/components/game/CompareResult';
+import { SeerResult } from '@/components/game/SeerResult';
+import { SpellChoice } from '@/components/game/SpellChoice';
+import { TargetPicker } from '@/components/game/TargetPicker';
+import { teammateBadge } from '@/components/game/TeammateBadge';
+import type { PickerItem } from '@/components/player/PlayerPicker';
 import {
-  type Ability,
-  type ActionSubmission,
   alivePlayers,
   availableNightAbilities,
   findPlayer,
-  type GameState,
   getRole,
   getValidTargets,
   isKnownTeammate,
   needsTarget,
+  seemSameTeam,
+  seenTeamOf,
+  type Ability,
+  type ActionSubmission,
+  type GameState,
   type Player,
+  type PlayerId,
   type RoleId,
 } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
-
-import { Idle } from '@/components/game/IdleTurn';
-import { RoleSummary } from '@/components/game/RoleSummary';
-import { SpellChoice } from '@/components/game/SpellChoice';
-import { TargetPicker } from '@/components/game/TargetPicker';
-import { teammateBadge } from '@/components/game/TeammateBadge';
 
 type NightTurnProps = {
   game: GameState;
@@ -41,6 +45,10 @@ export function NightTurn({ game, player, turnLabel, submissions, atReveal, onDo
   const { t } = useLanguage();
   const abilities = availableNightAbilities(game, player);
   const [chosen, setChosen] = useState<Ability | undefined>(abilities.length === 1 ? abilities[0] : undefined);
+  // Araştırma yeteneği (Kâhin): sonuç hemen, yalnızca bu oyuncuya gösterilir.
+  const [seen, setSeen] = useState<PlayerId>();
+  // Karşılaştırma yeteneği (Dedektif): iki hedefin sonucu hemen gösterilir.
+  const [compared, setCompared] = useState<[PlayerId, PlayerId]>();
   const roleId = player.roleId as RoleId;
   const texts = t.roles[roleId].abilities ?? {};
   const header = <PhaseHeader icon={Moon} phase="night" title={t.game.night(game.round)} subtitle={turnLabel} />;
@@ -64,6 +72,32 @@ export function NightTurn({ game, player, turnLabel, submissions, atReveal, onDo
         available={abilities}
         onSkip={() => onDone()}
         onChoose={(a) => (needsTarget(a) ? setChosen(a) : onDone({ actorId: player.id, abilityId: a.id }))}
+      />
+    );
+  }
+
+  if (compared) {
+    const [a, b] = compared.map((id) => findPlayer(game, id));
+    return (
+      <CompareResult
+        header={header}
+        summary={summary}
+        first={a}
+        second={b}
+        sameTeam={seemSameTeam(a.roleId, b.roleId)}
+        onDone={() => onDone({ actorId: player.id, abilityId: chosen.id, targetId: a.id, secondTargetId: b.id })}
+      />
+    );
+  }
+
+  if (seen) {
+    return (
+      <SeerResult
+        header={header}
+        summary={summary}
+        target={findPlayer(game, seen)}
+        team={seenTeamOf(findPlayer(game, seen).roleId)}
+        onDone={() => onDone({ actorId: player.id, abilityId: chosen.id, targetId: seen })}
       />
     );
   }
@@ -103,7 +137,12 @@ export function NightTurn({ game, player, turnLabel, submissions, atReveal, onDo
       question={texts[chosen.id]?.prompt ?? ''}
       hint={texts[chosen.id]?.description}
       items={items}
-      onConfirm={(targetId) => onDone({ actorId: player.id, abilityId: chosen.id, targetId })}
+      count={chosen.targets ?? 1}
+      onConfirm={(targetId, secondTargetId) => {
+        if (chosen.effect === 'investigate') setSeen(targetId);
+        else if (chosen.effect === 'compare' && secondTargetId) setCompared([targetId, secondTargetId]);
+        else onDone({ actorId: player.id, abilityId: chosen.id, targetId });
+      }}
       onPass={chosen.required ? undefined : () => (abilities.length > 1 ? setChosen(undefined) : onDone())}
     />
   );

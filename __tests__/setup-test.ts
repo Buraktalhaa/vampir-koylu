@@ -1,4 +1,17 @@
-import { allRandomSetup, createGame, maxVampires, reservedSlots, rollRoles, validateSetup, type RoleCounts } from '@/game';
+import {
+  allRandomSetup,
+  balancedVampires,
+  CLASSIC_ROLES,
+  classicSetup,
+  createGame,
+  maxVampires,
+  randomRange,
+  reservedSlots,
+  rollRoles,
+  sameSetup,
+  validateSetup,
+  type RoleCounts,
+} from '@/game';
 
 const total = (c: RoleCounts) => Object.values(c).reduce((a, b) => a + (b ?? 0), 0);
 const codes = (n: number, setup: Parameters<typeof validateSetup>[1]) => validateSetup(n, setup).map((e) => e.code);
@@ -107,5 +120,92 @@ describe('Ayrılmış yer (+ butonlarının kilitlenmesi)', () => {
 
   it('rastgele vampir en az 1 yer ayırır', () => {
     expect(reservedSlots(6, { vampire: { min: 0 }, villager: { min: 0 } })).toBe(1);
+  });
+});
+
+describe('"Yok" = 0', () => {
+  it('0 olan karakter oyunda yer almaz ve yer ayırmaz', () => {
+    expect(rollRoles(5, { vampire: 1, healer: 0, villager: { min: 0 } }).healer ?? 0).toBe(0);
+    expect(reservedSlots(5, { vampire: 1, healer: 0 })).toBe(1);
+  });
+  it('vampir 0 ise vampir yok hatası', () => {
+    expect(codes(5, { vampire: 0, villager: { min: 0 } })).toContain('needVampire');
+  });
+});
+
+describe('Bozuk aralık değerleri', () => {
+  it('NaN / eksik en az-en çok güvenli değerlere döner', () => {
+    expect(randomRange({ min: Number.NaN })).toEqual({ min: 0, max: undefined });
+    expect(randomRange({ min: 2, max: Number.NaN })).toEqual({ min: 2, max: undefined });
+    expect(randomRange({ min: -3, max: -1 })).toEqual({ min: 0, max: 0 });
+  });
+});
+
+describe('Klasik Mod', () => {
+  it('yalnızca klasik karakterler dağıtılır', () => {
+    for (let i = 0; i < 200; i++) {
+      const c = rollRoles(8, classicSetup());
+      expect(total(c)).toBe(8);
+      for (const [id, n] of Object.entries(c)) if (n) expect(CLASSIC_ROLES).toContain(id);
+    }
+  });
+});
+
+describe('Hazır seçenek tanıma (butonun seçili görünmesi)', () => {
+  it('aynı kurulumu tanır', () => {
+    expect(sameSetup(classicSetup(), classicSetup())).toBe(true);
+    expect(sameSetup(allRandomSetup(), allRandomSetup())).toBe(true);
+    expect(sameSetup(classicSetup(), allRandomSetup())).toBe(false);
+  });
+
+  it('bir kart değişince artık aynı sayılmaz', () => {
+    expect(sameSetup({ ...classicSetup(), vampire: 2 }, classicSetup())).toBe(false);
+    expect(sameSetup({ ...allRandomSetup(), healer: { min: 1 } }, allRandomSetup())).toBe(false);
+  });
+
+  it('eski "random" kaydı { min: 0 } ile aynı sayılır', () => {
+    const legacy = Object.fromEntries(Object.keys(allRandomSetup()).map((id) => [id, 'random'])) as Parameters<typeof sameSetup>[0];
+    expect(sameSetup(legacy, allRandomSetup())).toBe(true);
+  });
+});
+
+describe('Dengeli vampir sayısı', () => {
+  it('her 4 oyuncuya 1, ±1; 1 ile üst sınır arasında', () => {
+    for (const n of [3, 5, 8, 12, 16, 20]) {
+      const target = Math.max(1, Math.floor(n / 4));
+      for (const r of [0, 0.3, 0.9]) {
+        const v = balancedVampires(n, () => r);
+        expect(v).toBeGreaterThanOrEqual(Math.max(1, target - 1));
+        expect(v).toBeLessThanOrEqual(Math.min(maxVampires(n), target + 2));
+      }
+    }
+  });
+
+  it('üst sınır oyuncuların yarısından bir az', () => {
+    expect([5, 6, 8, 12].map(maxVampires)).toEqual([2, 2, 3, 5]);
+  });
+
+  it('serbest aralıkta (0–∞) vampir sayısı dengelenir; 10 kişide 4 vampir nadiren gelir', () => {
+    const h: Record<number, number> = {};
+    for (let i = 0; i < 2000; i++) {
+      const v = rollRoles(10, allRandomSetup()).vampire!;
+      h[v] = (h[v] ?? 0) + 1;
+      expect(v).toBeGreaterThanOrEqual(1);
+      expect(v).toBeLessThanOrEqual(4);
+    }
+    expect(h[2]).toBeGreaterThan(h[4]); // hedef en olası
+    expect(h[4]).toBeGreaterThan(100); // ama 4 de gelebiliyor (~%10)
+  });
+
+  it('elle verilen aralığa dokunulmaz (Tam 1 → hep 1)', () => {
+    for (let i = 0; i < 100; i++) expect(rollRoles(12, { vampire: { min: 1, max: 1 }, villager: { min: 0 } }).vampire).toBe(1);
+  });
+});
+
+describe('Küçük oyunda vampir', () => {
+  it('7 ve altı oyuncuda çoğunlukla 1 vampir (≈%90)', () => {
+    let one = 0;
+    for (let i = 0; i < 1000; i++) if (rollRoles(5, allRandomSetup()).vampire === 1) one++;
+    expect(one).toBeGreaterThan(820);
   });
 });

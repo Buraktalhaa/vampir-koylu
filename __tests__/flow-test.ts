@@ -9,7 +9,7 @@ import {
   skipNight,
 } from '@/game';
 
-import { alive, everyoneVotes, makeGame } from '../test-utils/game';
+import { alive, everyoneVotes, makeGame } from '@test-utils/game';
 
 describe('İlk gece ayarı', () => {
   it('kapalıysa ilk gece kimse yetenek kullanamaz', () => {

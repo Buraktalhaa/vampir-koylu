@@ -1,4 +1,4 @@
-import { defineRole } from './defineRole';
+import { defineRole } from '@/game/roles/defineRole';
 
 /** Şifacı: her gece bir oyuncuyu vampir saldırısından korur. */
 export const healer = defineRole({

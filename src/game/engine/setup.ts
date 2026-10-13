@@ -1,6 +1,6 @@
-import { getRole, ROLE_IDS, type RoleId } from '../roles';
-import { DEFAULT_SETTINGS, type GameSettings } from '../settings';
-import type { GameState, Player, Rng } from '../types';
+import { CLASSIC_ROLES, getRole, ROLE_IDS, type RoleId } from '@/game/roles';
+import { DEFAULT_SETTINGS, type GameSettings } from '@/game/settings';
+import type { GameState, Player, Rng } from '@/game/types';
 
 /**
  * Lobide her karakter için seçim:
@@ -28,11 +28,63 @@ export type SetupError =
 /** Rastgele seçimse aralığını döner, değilse null. */
 export function randomRange(slot: RoleSlot | undefined): Required<Pick<RandomRange, 'min'>> & Pick<RandomRange, 'max'> | null {
   if (slot === 'random') return { min: 0 };
-  if (typeof slot === 'object') return { min: slot.min, max: slot.max };
+  if (typeof slot === 'object' && slot !== null) {
+    const min = Number.isFinite(slot.min) ? Math.max(0, slot.min) : 0;
+    const max = Number.isFinite(slot.max) ? Math.max(0, slot.max as number) : undefined;
+    return { min, max };
+  }
   return null;
 }
 
-/** Vampirler oyun başında köylülere eşit ya da fazla olursa oyun anında biter. */
+/**
+ * Dengeli vampir sayısında sapma olasılıkları.
+ * Hedef = oyuncu / 4 (aşağı yuvarlanmış). Küsurat ("yukarıya yakınlık") büyüdükçe bir fazla vampir ihtimali artar:
+ * ör. 10 kişi = 2,5 → 2 ile 3 eşit olasılıkta; 7 kişi = 1,75 → 2 vampir ihtimali yüksek; 5 kişi = 1,25 → neredeyse hep 1.
+ */
+const VAMPIRE_ODDS = {
+  /** Bu oyuncu sayısına kadar "küçük oyun" sayılır (yalnızca bir fazla sapma olur). */
+  smallGameMax: 7,
+  /** Küçük oyunda bir fazla olasılığı: taban + (küsurat − 0,25) × artış. 5 kişi %10, 6 kişi %20, 7 kişi %30. */
+  smallUpBase: 0.1,
+  smallUpPerFraction: 0.4,
+  /** Büyük oyunda (8+): bir eksik = down × (1 − küsurat); bir fazla = up + küsurat × upPerFraction; iki fazla = up2. */
+  down: 0.2,
+  up: 0.25,
+  upPerFraction: 0.3,
+  up2: 0.1,
+};
+
+/**
+ * Dengeli vampir sayısı: hedef her 4 oyuncuya 1 (en az 1); olasılıkla bir eksik, bir fazla ya da iki fazla
+ * (bkz. VAMPIRE_ODDS). Sonuç her zaman 1 ile `maxVampires` arasında.
+ */
+export function balancedVampires(playerCount: number, rng: Rng = Math.random): number {
+  const exact = playerCount / 4;
+  const target = Math.max(1, Math.floor(exact));
+  const fraction = exact - Math.floor(exact);
+  const roll = rng();
+  let shift = 0;
+  if (playerCount <= VAMPIRE_ODDS.smallGameMax) {
+    const up = VAMPIRE_ODDS.smallUpBase + Math.max(0, fraction - 0.25) * VAMPIRE_ODDS.smallUpPerFraction;
+    shift = roll >= 1 - up ? 1 : 0;
+  } else {
+    const down = target > 1 ? VAMPIRE_ODDS.down * (1 - fraction) : 0;
+    const up = VAMPIRE_ODDS.up + fraction * VAMPIRE_ODDS.upPerFraction;
+    const { up2 } = VAMPIRE_ODDS;
+    if (roll < down) shift = -1;
+    else if (roll >= 1 - up2) shift = 2;
+    else if (roll >= 1 - up2 - up) shift = 1;
+  }
+  return Math.max(1, Math.min(maxVampires(playerCount), target + shift));
+}
+
+/** Vampir "Rastgele" ve aralığı elle daraltılmamış mı (en az 0/1, en çok sınırsız)? */
+function isFreeVampireRange(setup: RoleSetup): boolean {
+  const range = randomRange(setup.vampire);
+  return !!range && range.max === undefined && range.min <= 1;
+}
+
+/** Vampirler oyun başında köylülere eşit ya da fazla olursa oyun anında biter. Üst sınır: oyuncuların yarısından bir az. */
 export function maxVampires(playerCount: number): number {
   return Math.max(1, Math.floor((playerCount - 1) / 2));
 }
@@ -133,8 +185,19 @@ export function rollRoles(playerCount: number, setup: RoleSetup, rng: Rng = Math
   const counts: RoleCounts = { ...base };
   let remaining = toFill;
 
+  // Vampir rastgele ve aralığı serbestse sayısı oyuncu sayısına göre dengelenir (≈ her 4 oyuncuya 1, ±1).
+  const balanced = isFreeVampireRange(setup);
+  if (balanced) {
+    const extra = Math.max(0, Math.min(balancedVampires(playerCount, rng) - (counts.vampire ?? 0), remaining));
+    counts.vampire = (counts.vampire ?? 0) + extra;
+    remaining -= extra;
+  }
+
   while (remaining > 0) {
-    const candidates = pool.filter(({ id, cap }) => (counts[id] ?? 0) < cap);
+    const open = pool.filter(({ id, cap }) => (counts[id] ?? 0) < cap);
+    // Dengelenen vampir sayısı korunur; başka karakter kalmadıysa mecburen vampirle doldurulur.
+    const preferred = balanced ? open.filter(({ id }) => id !== 'vampire') : open;
+    const candidates = preferred.length ? preferred : open;
     const { id } = candidates[Math.floor(rng() * candidates.length)];
     counts[id] = (counts[id] ?? 0) + 1;
     remaining--;
@@ -145,6 +208,20 @@ export function rollRoles(playerCount: number, setup: RoleSetup, rng: Rng = Math
 /** Tüm karakterler rastgele. */
 export function allRandomSetup(): RoleSetup {
   return Object.fromEntries(ROLE_IDS.map((id) => [id, { min: 0 }])) as RoleSetup;
+}
+
+/** İki kurulum aynı mı? (Rastgele aralıklar normalize edilir; ör. eski 'random' = { min: 0 }.) */
+export function sameSetup(a: RoleSetup, b: RoleSetup): boolean {
+  const norm = (slot: RoleSlot | undefined) => {
+    const range = randomRange(slot);
+    return range ? `r${range.min}-${range.max ?? '∞'}` : `n${slot ?? 0}`;
+  };
+  return ROLE_IDS.every((id) => norm(a[id]) === norm(b[id]));
+}
+
+/** Klasik mod: yalnızca klasik karakterler rastgele, diğerleri yok ("Yok" = 0). */
+export function classicSetup(): RoleSetup {
+  return Object.fromEntries(ROLE_IDS.map((id) => [id, CLASSIC_ROLES.includes(id) ? { min: 0 } : 0])) as RoleSetup;
 }
 
 export function createGame(

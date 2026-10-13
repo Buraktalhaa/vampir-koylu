@@ -1,6 +1,6 @@
 import { resolveDayVote, resolveNight, resolveTrigger } from '@/game';
 
-import { makeGame } from '../test-utils/game';
+import { makeGame } from '@test-utils/game';
 
 describe('Olay kaydı (oyun sonu özeti)', () => {
   it('gece kullanılan yetenekleri, kurtarmaları ve ölümleri tur/faz ile kaydeder', () => {

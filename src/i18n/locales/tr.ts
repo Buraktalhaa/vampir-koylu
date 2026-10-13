@@ -1,10 +1,11 @@
-import type { Translation } from '../types';
+import type { Translation } from '@/i18n/types';
 
 export const tr: Translation = {
   languageName: 'Türkçe',
   teams: {
     village: { name: 'Köy', goal: 'Tüm vampirleri bul ve köyden at.' },
     vampire: { name: 'Vampirler', goal: 'Sayıca köylülere eşit ya da fazla ol.' },
+    neutral: { name: 'Tarafsız', goal: 'Kendi kazanma koşulunu gerçekleştir; kimseyle takım değilsin.' },
   },
   quiz: [
     { q: 'En iyi su hangisi?', a: 'Elmacık', b: 'Badem' },
@@ -64,14 +65,85 @@ export const tr: Translation = {
       description: 'Köy seni asarsa yanında bir oyuncuyu daha götürürsün.',
       abilities: { revenge: { name: 'İntikam', prompt: 'Yanında kimi götüreceksin?', description: 'Köy seni asarsa yanında bir oyuncuyu daha götürürsün.' } },
     },
+    seer: {
+      name: 'Kâhin',
+      tip: "Her gece bir oyuncu seç; Köy, Vampirler ya da Tarafsız olduğunu hemen öğrenirsin. Bildiklerini gündüz nasıl ve ne zaman söyleyeceğini iyi düşün: kâhin olduğunu belli edersen vampirlerin ilk hedefi olursun.",
+      description: 'Her gece bir oyuncunun takımını öğrenirsin.',
+      abilities: { divine: { name: 'Kehanet', prompt: 'Kimin takımını öğrenmek istiyorsun?', description: 'Seçtiğin oyuncunun takımını (Köy / Vampirler / Tarafsız) öğrenirsin.' } },
+    },
+    mayor: {
+      name: 'Belediye Başkanı',
+      tip: "Gündüz oylamasında oyun 2 sayılır. Gizli oylamada bu kendiliğinden hesaplanır, kimse fark etmez. Açık oylamada elini kaldırırken oyunun 2 sayıldığını söylemen gerekir; bu da başkan olduğunu ortaya çıkarır.",
+      idle: 'Bu gece yapacak bir şeyin yok. Oyunun ağırlığı gündüz belli olacak.',
+      description: 'Gündüz oylamasında oyun 2 sayılır.',
+    },
+    jester: {
+      name: 'Deli',
+      tip: "Köy seni asarsa tek başına kazanırsın ve oyun biter. Şüpheli davran ama fazla belli etme; vampirler seni gece öldürürse kazanamazsın. Diğer takımlardan biri kazanırsa sen kaybedersin.",
+      idle: 'Bu gece yapacak bir şeyin yok. Yarın onları seni asmaya ikna et.',
+      description: 'Köy seni asarsa tek başına kazanırsın.',
+    },
+    bodyguard: {
+      name: 'Fedai',
+      tip: "Her gece başka bir oyuncuyu korumaya alırsın. O gece ona saldırı gelirse (vampir ya da lanet) onun yerine sen ölürsün, o yaşar. Şifacı seni korursa sen de kurtulursun. Kendini koruyamazsın.",
+      description: "Her gece birini korursun; ona saldırı gelirse onun yerine sen ölürsün.",
+      abilities: { guard: { name: 'Fedakârlık', prompt: 'Bu gece kimin yerine ölmeyi göze alıyorsun?', description: 'Seçtiğin kişiye gelen saldırıyı üstlenirsin: o yaşar, sen ölürsün.' } },
+    },
+    visitor: {
+      name: 'Gece Misafiri',
+      tip: "Her gece başka birinin evine misafir gidersin. O gece senin evine saldırı gelirse evde olmadığın için ölmezsin. Ama misafir gittiğin kişi vampirse ya da o gece saldırıya uğrarsa sen de ölürsün. Kimin evine gittiğini iyi seç.",
+      description: "Her gece birine misafir gidersin; evine gelen saldırıdan kurtulursun ama riskli evde sen de ölürsün.",
+      abilities: { visit: { name: 'Misafirlik', prompt: 'Bu gece kime misafir gidiyorsun?', description: 'O gece evinde olmazsın. Gittiğin kişi vampirse ya da saldırıya uğrarsa sen de ölürsün.' } },
+    },
+    detective: {
+      name: 'Dedektif',
+      tip: "Her gece iki yaşayan oyuncu seçersin ve aynı takımda olup olmadıklarını hemen öğrenirsin. Kimin takımında olduklarını söylemez; sadece aynı mı farklı mı. Kendini seçemezsin.",
+      description: 'Her gece iki oyuncunun aynı takımda olup olmadığını öğrenirsin.',
+      abilities: { compare: { name: 'Soruşturma', prompt: 'Hangi iki oyuncuyu karşılaştıracaksın?', description: 'Seçtiğin iki oyuncunun aynı takımda olup olmadığını öğrenirsin.' } },
+    },
+    loneVampire: {
+      name: 'Yalnız Vampir',
+      tip: "Vampir takımındasın ama kimse bilmiyor: diğer vampirler seni tanımaz, sen de onları. Onlar yaşadıkça köylü gibisin, gece yapacak bir şeyin yok. Diğer vampirlerin hepsi ölünce uyanırsın ve her gece birini ısırırsın. Kâhin'e köylü görünürsün.",
+      description: "Diğer vampirler ölene kadar köylü gibisin; hepsi ölünce ısırmaya başlarsın.",
+      idle: "Diğer vampirler hâlâ hayatta. Şimdilik köylü gibi davran, sıranı bekle.",
+      abilities: { bite: { name: 'Yalnız Isırık', prompt: 'Artık yalnızsın. Bu gece kimi ısıracaksın?', description: 'Diğer vampirlerin hepsi ölünce açılır; her gece birini ısırırsın.' } },
+    },
+    cursed: {
+      name: 'Lanetli',
+      tip: "Normal bir köylüsün ama kanında bir lanet var. Vampirler seni gece ısırırsa ölmezsin, vampire dönüşürsün: vampir takımına geçer, onları tanır ve onlarla ısırırsın. Şifacı seni korursa ya da Fedai senin yerine ölürse dönüşmezsin.",
+      description: "Köylüsün; vampirler seni ısırırsa ölmez, vampire dönüşürsün.",
+      idle: "Bu gece yapacak bir şeyin yok. Umarım kimse kapını çalmaz…",
+    },
+    shaman: {
+      name: 'Şaman',
+      tip: "Oyun boyunca bir kez, ölmüş bir oyuncuyu diriltebilirsin. Dirilen kişi sabah rolü ve kalan yetenekleriyle oyuna döner. Ölen yokken yapacak bir şeyin yoktur; diriltmeyi doğru ana sakla.",
+      description: "Oyun boyunca bir kez ölü bir oyuncuyu diriltirsin.",
+      idle: "Bu gece diriltecek kimse yok ya da gücünü zaten kullandın.",
+      abilities: { raise: { name: 'Ruh Çağırma', prompt: 'Kimi ölüler diyarından geri çağıracaksın?', description: 'Seçtiğin ölü oyuncu sabah rolüyle birlikte hayata döner. Oyunda bir kez.' } },
+    },
+    thief: {
+      name: 'Rol Çalan',
+      tip: "Oyunda bir kez bir oyuncuyu işaretlersin. O kişi nasıl ölürse ölsün (gece saldırısı, oylama, intikam) onun rolünü ve takımını alırsın; vampiri işaretlediysen vampir olursun. Rolü almadan oyun biterse kaybedersin. Kimi işaretlediğini kimseye söyleme.",
+      description: 'Bir oyuncuyu işaretlersin; o ölünce rolünü alırsın.',
+      idle: 'İşaretin yerinde. Hedefin ölünce rolü senin olacak.',
+      abilities: { mark: { name: 'İşaretleme', prompt: 'Kimin rolünü çalmak istiyorsun?', description: 'Seçtiğin kişi öldüğünde onun rolünü ve takımını alırsın. Oyunda bir kez.' } },
+    },
   },
   menu: { tagline: 'Bu köyde tuhaf şeyler oluyor…', resume: 'Devam eden oyuna dön', newGame: 'Yeni Oyun', roles: 'Karakterler', settings: 'Ayarlar' },
-  appSettings: { title: 'Ayarlar', language: 'Dil' },
+  appSettings: {
+    title: 'Ayarlar',
+    language: 'Dil',
+    soundSection: 'Ses ve titreşim',
+    music: { label: 'Müzik', hint: 'Menüde, gece ve gündüz çalan arka plan müziği.' },
+    sounds: { label: 'Ses efektleri', hint: 'Oylama başlarken çalan ses gibi kısa efektler.' },
+    vibration: { label: 'Titreşim', hint: 'Süre dolunca ve oyuncu sürüklerken hafif titreşim.' },
+  },
   encyclopedia: {
     title: 'Karakterler',
     all: 'Hepsi',
     abilities: 'Yetenekler',
     team: 'Takım',
+    classic: 'Klasik karakterler',
     search: 'İsim ya da yetenek ara',
     noResults: 'Sonuç yok',
     noResultsHint: (query) => `“${query}” için karakter bulunamadı.`,
@@ -87,7 +159,7 @@ export const tr: Translation = {
     noTarget: 'Hedefsiz',
     self: 'Kendine de',
     noRepeat: 'Art arda aynı kişi olmaz',
-    effects: { protect: 'Koruma', protectAll: 'Koruma', kill: 'Öldürme', investigate: 'Bilgi' },
+    effects: { protect: 'Koruma', protectAll: 'Koruma', guard: 'Fedakârlık', visit: 'Misafirlik', kill: 'Öldürme', investigate: 'Bilgi', compare: 'Karşılaştırma', revive: 'Diriltme', mark: 'İşaretleme' },
   },
   common: { back: 'Geri' },
   setup: {
@@ -106,6 +178,25 @@ export const tr: Translation = {
     summaryTitle: 'Özet',
     summaryPlayers: 'Oyuncular',
     summaryDiscussion: 'Tartışma',
+    rangeEdit: 'Aralığı ayarla',
+    rangeTitle: (role) => `Kaç ${role} olsun?`,
+    rangeFree: 'Serbest',
+    rangeAtLeastOne: 'En az 1',
+    rangeAtMostOne: 'En fazla 1',
+    rangeExactlyOne: 'Tam 1',
+    unlimited: 'Sınırsız',
+    done: 'Tamam',
+    rangeBalancedVampire: 'Vampir sayısı oyuncu sayısına göre ayarlanır: yaklaşık her 4 kişiye 1 (küçük oyunlarda neredeyse hep 1).',
+    rangeSentence: (role, min, max) =>
+      max === undefined
+        ? min === 0
+          ? `${role} hiç olmayabilir ya da birden fazla olabilir.`
+          : `En az ${min} ${role} olacak, fazlası rastgele.`
+        : min === max
+          ? `Oyunda tam ${min} ${role} olacak.`
+          : min === 0
+            ? `En fazla ${max} ${role} olacak, hiç olmayabilir.`
+            : `Oyunda ${min} ile ${max} arasında ${role} olacak.`,
     min: 'En az',
     max: 'En çok',
     players: 'Oyuncular',
@@ -113,6 +204,7 @@ export const tr: Translation = {
     add: 'Ekle',
     roles: 'Karakterler',
     random: 'Rastgele',
+    classicMode: 'Klasik Mod',
     allRandom: 'Hepsi Rastgele',
     start: 'Oyunu Başlat',
     next: 'Devam',
@@ -138,6 +230,13 @@ export const tr: Translation = {
     leftGame: (name, alive) => `${name} artık oyunda değil. Telefon sırası ${alive} kişiyle devam edecek.`,
     rolesAtEnd: 'Roller oyun sonunda açıklanacak.',
     toDiscussion: 'Tartışmaya geç',
+    soloWin: (name, role) => `${name} (${role}) tek başına kazandı!`,
+    sameTeam: 'Aynı takımdalar',
+    differentTeams: 'Farklı takımdalar',
+    revived: (name) => `${name} dirildi! Ruhu bedenine geri döndü.`,
+    roleChanged: (from, to) => `Rolün değişti: ${from} iken artık ${to} oldun.`,
+    markedTarget: (name) => `İşaretlediğin kişi: ${name}`,
+    seerResult: (name) => `${name} şu takımda:`,
     seeResult: 'Sonucu gör',
     firstNightIdle: 'İlk gece yetenekler kapalı. Bu gece sadece rolünü öğreniyorsun.',
     moreInfo: 'Detaylı açıklama',
@@ -226,6 +325,11 @@ export const tr: Translation = {
     endEarly: 'Erken bitir',
     skipVote: 'Oylamayı atla',
     toNight: 'Geceye geç',
+    menuTitle: 'Oyun menüsü',
+    restart: 'Oyunu yeniden başlat',
+    restartTitle: 'Oyun yeniden başlatılsın mı?',
+    restartMessage: 'Aynı oyuncularla roller yeniden dağıtılır; bu oyun silinir.',
+    close: 'Kapat',
     quitTitle: 'Oyundan çıkılsın mı?',
     quitMessage: 'Bu oyun silinecek ve geri getirilemeyecek.',
     cancel: 'Vazgeç',

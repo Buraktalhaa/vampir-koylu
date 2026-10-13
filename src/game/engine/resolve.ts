@@ -1,5 +1,5 @@
-import { getRole } from '../roles';
-import { checkWinner, teamOf } from '../teams';
+import { getRole } from '@/game/roles';
+import { checkWinner, teamOf } from '@/game/teams';
 import type {
   ActionSubmission,
   DeathEvent,
@@ -10,9 +10,9 @@ import type {
   Player,
   PlayerId,
   Rng,
-} from '../types';
-import { EFFECTS, type EffectContext, type ResolvedAction } from './effects';
-import { canUseAbility, findAbility, findPlayer, getValidTargets, needsTarget } from './targeting';
+} from '@/game/types';
+import { EFFECTS, type EffectContext, type ResolvedAction } from '@/game/engine/effects';
+import { canUseAbility, findAbility, findPlayer, getValidTargets, needsTarget } from '@/game/engine/targeting';
 
 type Resolvable = ResolvedAction & { effect: keyof typeof EFFECTS };
 
@@ -39,7 +39,14 @@ function collectNightActions(
     const actor = findPlayer(state, sub.actorId);
     const ability = findAbility(actor, sub.abilityId);
     if (ability.trigger !== 'night' || !canUseAbility(state, actor, ability)) continue;
-    if (needsTarget(ability) && !getValidTargets(state, actor, ability).some((p) => p.id === sub.targetId)) continue;
+    if (needsTarget(ability)) {
+      const valid = new Set(getValidTargets(state, actor, ability).map((p) => p.id));
+      if (!sub.targetId || !valid.has(sub.targetId)) continue;
+      // İki hedefli yetenek: ikinci hedef de geçerli ve birinciden farklı olmalı.
+      if ((ability.targets ?? 1) === 2 && (!sub.secondTargetId || sub.secondTargetId === sub.targetId || !valid.has(sub.secondTargetId))) {
+        continue;
+      }
+    }
     const count = actionCount.get(actor.id) ?? 0;
     if (count >= (getRole(actor.roleId).maxNightActions ?? 1)) continue;
     actionCount.set(actor.id, count + 1);
@@ -53,7 +60,13 @@ function collectNightActions(
       teamVotes.set(key, vote);
       continue;
     }
-    actions.push({ actorId: actor.id, targetId: sub.targetId, effect: ability.effect, cause: ability.cause ?? 'ability' });
+    actions.push({
+      actorId: actor.id,
+      targetId: sub.targetId,
+      secondTargetId: sub.secondTargetId,
+      effect: ability.effect,
+      cause: ability.cause ?? 'ability',
+    });
   }
 
   for (const { actorIds, targets } of teamVotes.values()) {
@@ -105,13 +118,36 @@ function applyDeaths(
       }
     }
   }
-  const events = stamp(at, [...deaths].map(([playerId, d]) => ({ type: 'death' as const, playerId, ...d })));
+  const deathEvents: EventBody[] = [...deaths].map(([playerId, d]) => ({ type: 'death' as const, playerId, ...d }));
+
+  // Rol Çalan: işaretlediği kişi (nasıl olursa olsun) öldüyse onun rolünü alır.
+  const stolen = new Map<PlayerId, string>();
+  for (const thief of players) {
+    const via = getRole(thief.roleId).stealsRoleVia;
+    const mark = via ? thief.abilityState[via]?.lastTarget : undefined;
+    if (thief.alive && mark && deaths.has(mark)) stolen.set(thief.id, findPlayer(state, mark).roleId);
+  }
+  for (const [id, toRoleId] of stolen) {
+    const fromRoleId = players.find((p) => p.id === id)!.roleId;
+    const i = players.findIndex((p) => p.id === id);
+    players[i] = {
+      ...players[i],
+      roleId: toRoleId,
+      convertedFrom: fromRoleId,
+      abilityState: Object.fromEntries(getRole(toRoleId).abilities.map((ab) => [ab.id, { usesLeft: ab.uses }])),
+    };
+    deathEvents.push({ type: 'converted', playerId: id, fromRoleId, toRoleId });
+  }
+  const events = stamp(at, deathEvents);
   const next = {
     ...state,
     players,
     events: [...state.events, ...events],
     pendingTriggers: [...state.pendingTriggers, ...triggers],
   };
+  // Köyün astığı "asılırsa kazanır" rolü (ör. Deli) tek başına kazanır; oyun hemen biter.
+  const soloWinner = [...deaths].find(([id, d]) => d.cause === 'lynch' && getRole(findPlayer(state, id).roleId).winsIfLynched);
+  if (soloWinner) return { ...next, pendingTriggers: [], winner: 'neutral', winners: [soloWinner[0]] };
   // Bekleyen tetikleyici varsa (ör. İntikamcı) kazanan, atış yapıldıktan sonra belirlenir.
   return { ...next, winner: next.pendingTriggers.length ? null : checkWinner(next) };
 }
@@ -121,6 +157,12 @@ function newContext(state: GameState): EffectContext {
     roleOf: (id) => findPlayer(state, id).roleId,
     aliveIds: state.players.filter((p) => p.alive).map((p) => p.id),
     protectedIds: new Set(),
+    guards: new Map(),
+    away: new Set(),
+    visits: new Map(),
+    attacked: new Set(),
+    conversions: new Map(),
+    revivals: new Map(),
     deaths: new Map(),
     events: [],
   };
@@ -136,11 +178,41 @@ export function resolveNight(
 
   const ctx = newContext(state);
   for (const action of actions) EFFECTS[action.effect].apply(ctx, action);
+  // Tur sonu adımları (öncelik sırasıyla, her efekt bir kez).
+  for (const kind of [...new Set(actions.map((a) => a.effect))]) EFFECTS[kind].finalize?.(ctx);
 
   let players = state.players;
   for (const sub of used) players = withAbilityUsed(state, players, sub.actorId, sub.abilityId, sub.targetId);
 
-  const usedEvents: EventBody[] = used.map((u) => ({ type: 'ability', actorId: u.actorId, abilityId: u.abilityId, targetId: u.targetId }));
+  // Dirilenler (ör. Şaman): hayata döner, rolü ve hakları aynen kalır.
+  for (const [id, by] of ctx.revivals) {
+    players = players.map((p) => (p.id === id ? { ...p, alive: true } : p));
+    ctx.events.push({ type: 'revived', playerId: id, by });
+  }
+
+  // Dönüşenler (ör. Lanetli): yeni rol, yeni yetenek hakları; olay kaydına yazılır.
+  for (const [id, toRoleId] of ctx.conversions) {
+    if (ctx.deaths.has(id)) continue;
+    players = players.map((p) =>
+      p.id === id
+        ? {
+            ...p,
+            roleId: toRoleId,
+            convertedFrom: p.roleId,
+            abilityState: Object.fromEntries(getRole(toRoleId).abilities.map((a) => [a.id, { usesLeft: a.uses }])),
+          }
+        : p,
+    );
+    ctx.events.push({ type: 'converted', playerId: id, fromRoleId: findPlayer(state, id).roleId, toRoleId });
+  }
+
+  const usedEvents: EventBody[] = used.map((u) => ({
+    type: 'ability',
+    actorId: u.actorId,
+    abilityId: u.abilityId,
+    targetId: u.targetId,
+    secondTargetId: u.secondTargetId,
+  }));
   const next = applyDeaths(
     { ...state, players, events: [...state.events, ...stamp(state, [...usedEvents, ...ctx.events])] },
     ctx.deaths,
@@ -182,7 +254,9 @@ export function resolveDayVote(state: GameState, votes: Record<PlayerId, PlayerI
   const tally = new Map<PlayerId, number>();
   for (const [voterId, targetId] of Object.entries(votes)) {
     if (!findPlayer(state, voterId).alive || !findPlayer(state, targetId).alive) continue;
-    tally.set(targetId, (tally.get(targetId) ?? 0) + 1);
+    // Oy ağırlığı (ör. Belediye Başkanı 2 sayılır).
+    const weight = getRole(findPlayer(state, voterId).roleId).voteWeight ?? 1;
+    tally.set(targetId, (tally.get(targetId) ?? 0) + weight);
   }
   return resolveTally(state, tally);
 }
