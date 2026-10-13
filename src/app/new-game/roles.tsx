@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Check, ChevronRight, CircleAlert, Dices } from 'lucide-react-native';
+import { Check, ChevronRight, CircleAlert, Dices, Sparkles } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/AppText';
@@ -9,19 +9,29 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { RoleSlotCard } from '@/components/setup/RoleSlotCard';
 import {
   allRandomSetup,
+  classicSetup,
+  sameSetup,
+  CLASSIC_ROLES,
   maxVampires,
   randomRange,
   reservedSlots,
   ROLE_IDS,
+  ROLES,
   validateSetup,
   type RoleId,
   type RoleSetup,
   type SetupError,
+  type TeamId,
 } from '@/game';
 import type { Translation } from '@/i18n/types';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { useGame } from '@/store/GameProvider';
 import { colors, radius, space } from '@/theme/tokens';
+import { GroupHeader } from '@/components/role/GroupHeader';
+import { TEAM_VISUALS } from '@/theme/teams';
+
+/** Kurulum ekranındaki grup sırası. */
+const TEAM_ORDER: TeamId[] = ['village', 'vampire', 'neutral'];
 
 function errorText(t: Translation, e: SetupError): string {
   switch (e.code) {
@@ -55,6 +65,21 @@ export default function RolesStep() {
   const setSlot = (id: RoleId, slot: RoleSetup[RoleId]) => updateDraft({ setup: { ...setup, [id]: slot } });
 
   const errors = validateSetup(players, setup);
+  const full = reservedSlots(players, setup) >= players;
+  // Hazır seçenek birebir uygulanmışsa butonu seçili göster; kart değişince seçim kalkar.
+  const isClassic = sameSetup(setup, classicSetup());
+  const isAllRandom = sameSetup(setup, allRandomSetup());
+  // En üstte klasik karakterler, altında diğerleri takımlarına göre.
+  const groups = [
+    { key: 'classic', icon: Sparkles, title: t.encyclopedia.classic, color: colors.text1, ids: CLASSIC_ROLES },
+    ...TEAM_ORDER.map((team) => ({
+      key: team,
+      icon: TEAM_VISUALS[team].icon,
+      title: t.teams[team].name,
+      color: TEAM_VISUALS[team].fg,
+      ids: ROLE_IDS.filter((id) => ROLES[id].team === team && !CLASSIC_ROLES.includes(id)),
+    })),
+  ].filter((g) => g.ids.length);
   const fixed = Object.values(setup).reduce<number>((sum, s) => sum + (typeof s === 'number' ? s : 0), 0);
   const randomCount = Object.values(setup).filter((s) => randomRange(s) !== null).length;
   const shown = errors.some((e) => e.code === 'tooManyRoles') || randomCount === 0 ? fixed : players;
@@ -103,23 +128,45 @@ export default function RolesStep() {
         </View>
       )}
 
-      <Button label={t.setup.allRandom} variant="secondary" icon={Dices} onPress={() => updateDraft({ setup: allRandomSetup() })} />
-
-      <View style={styles.grid}>
-        {ROLE_IDS.map((id) => (
-          <View key={id} style={styles.cell}>
-            <RoleSlotCard
-              roleId={id}
-              slot={setup[id]}
-              onChange={(slot) => setSlot(id, slot)}
-              players={players}
-              full={reservedSlots(players, setup) >= players}
-              limit={id === 'vampire' ? maxVampires(players) : players}
-              error={errors.some((e) => errorRole(e) === id)}
-            />
-          </View>
-        ))}
+      <View style={styles.presets}>
+        <View style={styles.flex}>
+          <Button
+            label={t.setup.classicMode}
+            variant={isClassic ? 'primary' : 'secondary'}
+            icon={isClassic ? Check : Sparkles}
+            onPress={() => updateDraft({ setup: classicSetup() })}
+          />
+        </View>
+        <View style={styles.flex}>
+          <Button
+            label={t.setup.allRandom}
+            variant={isAllRandom ? 'primary' : 'secondary'}
+            icon={isAllRandom ? Check : Dices}
+            onPress={() => updateDraft({ setup: allRandomSetup() })}
+          />
+        </View>
       </View>
+
+      {groups.map(({ key, icon, title, color, ids }) => (
+        <View key={key} style={styles.section}>
+          <GroupHeader icon={icon} title={title} color={color} count={ids.length} />
+          <View style={styles.grid}>
+            {ids.map((id) => (
+              <View key={id} style={styles.cell}>
+                <RoleSlotCard
+                  roleId={id}
+                  slot={setup[id]}
+                  onChange={(slot) => setSlot(id, slot)}
+                  players={players}
+                  full={full}
+                  limit={id === 'vampire' ? maxVampires(players) : players}
+                  error={errors.some((e) => errorRole(e) === id)}
+                />
+              </View>
+            ))}
+          </View>
+        </View>
+      ))}
     </Screen>
   );
 }
@@ -130,6 +177,8 @@ const styles = StyleSheet.create({
   summaryOk: { borderColor: colors.success.fg, backgroundColor: colors.success.bg },
   summaryError: { borderColor: colors.danger.fill, backgroundColor: colors.team.vampire.bg },
   summaryRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  section: { gap: space[2] },
+  presets: { flexDirection: 'row', gap: space[2] },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
   cell: { width: '50%', padding: 5 },
 });

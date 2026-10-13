@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Search } from 'lucide-react-native';
+import { Search, Sparkles, type LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -8,16 +8,19 @@ import { Button } from '@/components/ui/Button';
 import { RoleCard } from '@/components/role/RoleCard';
 import { Screen } from '@/components/ui/Screen';
 import { CountBadge, ScreenHeader } from '@/components/ui/ScreenHeader';
-import { ROLE_IDS, ROLES, type RoleId } from '@/game/roles';
+import { CLASSIC_ROLES, ROLE_IDS, ROLES, type RoleId } from '@/game/roles';
 import type { TeamId } from '@/game/types';
 import type { Translation } from '@/i18n/types';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { TEAM_VISUALS } from '@/theme/teams';
 import { colors, radius, space } from '@/theme/tokens';
 import { TextField } from '@/components/ui/TextField';
+import { GroupHeader } from '@/components/role/GroupHeader';
 
 type Filter = TeamId | 'all';
-const TEAMS: TeamId[] = ['village', 'vampire'];
+const TEAMS: TeamId[] = ['village', 'vampire', 'neutral'];
+
+type Section = { key: string; title: string; icon: LucideIcon; color: string; ids: RoleId[] };
 
 const norm = (s: string) => s.toLocaleLowerCase('tr');
 
@@ -34,10 +37,18 @@ export default function Encyclopedia() {
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
   const visible = ROLE_IDS.filter((id) => (filter === 'all' || ROLES[id].team === filter) && matches(t, id, query.trim()));
-  const sections = TEAMS.filter((team) => filter === 'all' || filter === team).map((team) => ({
-    team,
-    ids: visible.filter((id) => ROLES[id].team === team),
-  }));
+  // "Hepsi"nde önce klasik karakterler, sonra diğerleri takımlarına göre; takım sekmesinde yalnızca o takım.
+  const classic = filter === 'all' ? CLASSIC_ROLES.filter((id) => visible.includes(id)) : [];
+  const sections: Section[] = [
+    ...(classic.length ? [{ key: 'classic', title: t.encyclopedia.classic, icon: Sparkles, color: colors.text1, ids: classic }] : []),
+    ...TEAMS.filter((team) => filter === 'all' || filter === team).map((team) => ({
+      key: team,
+      title: t.teams[team].name,
+      icon: TEAM_VISUALS[team].icon,
+      color: TEAM_VISUALS[team].fg,
+      ids: visible.filter((id) => ROLES[id].team === team && !classic.includes(id)),
+    })),
+  ];
 
   const clear = () => {
     setQuery('');
@@ -89,19 +100,10 @@ export default function Encyclopedia() {
       ) : (
         sections
           .filter((s) => s.ids.length)
-          .map(({ team, ids }) => {
-            const { icon: Icon, fg } = TEAM_VISUALS[team];
+          .map(({ key, title, icon: Icon, color, ids }) => {
             return (
-              <View key={team} style={styles.section}>
-                <View style={styles.sectionHead}>
-                  <Icon size={14} color={fg} />
-                  <AppText variant="caption" color={fg} style={styles.flex}>
-                    {t.teams[team].name.toLocaleUpperCase('tr')}
-                  </AppText>
-                  <AppText variant="caption" color={colors.text3}>
-                    {ids.length}
-                  </AppText>
-                </View>
+              <View key={key} style={styles.section}>
+                <GroupHeader icon={Icon} title={title} color={color} count={ids.length} />
                 <View style={styles.grid}>
                   {ids.map((id) => (
                     <View key={id} style={styles.gridCell}>
@@ -142,7 +144,6 @@ const styles = StyleSheet.create({
   tabSelected: { backgroundColor: colors.surface3 },
   tabText: { fontSize: 14 },
   section: { gap: space[3] },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', gap: space[1], marginTop: space[2] },
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
   gridCell: { width: '33.333%', padding: 6 },
   empty: {

@@ -14,7 +14,7 @@ export function RolePill({ roleId, label, withTeam }: Props) {
   const { t } = useLanguage();
   return (
     <View style={styles.pill}>
-      <RolePortrait roleId={roleId} size={32} />
+      <RolePortrait roleId={roleId} size={36} />
       <View style={styles.text}>
         <AppText variant="button" numberOfLines={1}>
           {label ?? t.roles[roleId].name}

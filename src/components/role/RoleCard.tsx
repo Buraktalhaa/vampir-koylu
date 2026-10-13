@@ -7,6 +7,7 @@ import { colors, radius, space } from '@/theme/tokens';
 
 import { AppText } from '@/components/ui/AppText';
 import { RolePortrait } from '@/components/role/RolePortrait';
+import { RoleWatermark } from '@/components/role/RoleWatermark';
 
 type Props = {
   roleId: RoleId;
@@ -33,7 +34,7 @@ export function RoleCard({ roleId, size = 'cell', onPress, footer }: Props) {
         style={({ pressed }) => [styles.cell, { borderColor: line, backgroundColor: bg }, pressed && styles.pressed]}
       >
         <View>
-          <RolePortrait roleId={roleId} size={76} />
+          <RolePortrait roleId={roleId} size={84} />
           <View style={[styles.teamDot, { borderColor: line }]}>
             <TeamIcon size={12} color={fg} />
           </View>
@@ -54,6 +55,7 @@ export function RoleCard({ roleId, size = 'cell', onPress, footer }: Props) {
         </AppText>
       </View>
       <View style={styles.portraitArea}>
+        <RoleWatermark roleId={roleId} size={220} style={styles.bigWatermark} />
         <RolePortrait roleId={roleId} size={128} />
       </View>
       <AppText variant="display">{text.name.toLocaleUpperCase('tr')}</AppText>
@@ -96,5 +98,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg0,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
+  bigWatermark: { right: -40, top: -30, opacity: 0.1 },
 });
