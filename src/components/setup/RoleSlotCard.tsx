@@ -1,18 +1,16 @@
-import { Dices, Info, Minus, Plus } from 'lucide-react-native';
+import { ChevronDown, Info } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { RoleInfoSheet } from '@/components/role/RoleInfoSheet';
 import { RolePortrait } from '@/components/role/RolePortrait';
-import { RoleWatermark } from '@/components/role/RoleWatermark';
 import { RangeSheet } from '@/components/setup/RangeSheet';
 import { AppText } from '@/components/ui/AppText';
-import { IconButton } from '@/components/ui/IconButton';
+import { Stepper } from '@/components/ui/Stepper';
 import { randomRange, type RoleSlot } from '@/game';
-import { ROLES, type RoleId } from '@/game/roles';
+import type { RoleId } from '@/game/roles';
 import { useLanguage } from '@/i18n/LanguageProvider';
-import { TEAM_VISUALS } from '@/theme/teams';
-import { colors, radius, space } from '@/theme/tokens';
+import { colors, fonts, radius, space } from '@/theme/tokens';
 
 type Props = {
   roleId: RoleId;
@@ -30,7 +28,6 @@ type Props = {
 /** Kurulumda tek karakterin kartı: madalyon + isim; sabit sayı ya da rastgele için en az / en çok; altta Yok / Rastgele. */
 export function RoleSlotCard({ roleId, slot, onChange, players, limit, full, error }: Props) {
   const { t } = useLanguage();
-  const { line } = TEAM_VISUALS[ROLES[roleId].team];
   const range = randomRange(slot);
   // "Yok" kayıtta 0 olarak tutulur (undefined = bu karakter kurulumda hiç yoktu, ör. sonradan eklendi).
   const isNone = slot === undefined || slot === 0;
@@ -39,12 +36,20 @@ export function RoleSlotCard({ roleId, slot, onChange, players, limit, full, err
   const [editing, setEditing] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
 
+  const mode: Mode = range ? 'random' : isNone ? 'none' : 'fixed';
+  const setMode = (next: Mode) => {
+    if (next === mode) return;
+    if (next === 'none') onChange(0);
+    else if (next === 'random') onChange({ min: 0 });
+    // Sabit: rastgelenin en azı (yoksa 1); yer dolduysa ve kart boşsa eklenemez.
+    else onChange(full && isNone ? 0 : Math.min(cap, Math.max(1, range?.min ?? 1)));
+  };
+
   return (
-    <View style={[styles.card, { borderColor: error ? colors.danger.fg : line }]}>
-      <RoleWatermark roleId={roleId} size={104} />
-      <View style={styles.head}>
-        <RolePortrait roleId={roleId} size={48} />
-        <AppText variant="button" numberOfLines={1} style={styles.name}>
+    <View style={[styles.card, { borderColor: error ? colors.danger.fg : colors.line }]}>
+      <View style={[styles.head, isNone && styles.faded]}>
+        <RolePortrait roleId={roleId} size={44} />
+        <AppText variant="h3" numberOfLines={2} style={styles.name}>
           {t.roles[roleId].name}
         </AppText>
         <Pressable
@@ -54,40 +59,53 @@ export function RoleSlotCard({ roleId, slot, onChange, players, limit, full, err
           hitSlop={8}
           style={styles.info}
         >
-          <Info size={16} color={colors.text2} />
+          <Info size={20} color={colors.text2} />
         </Pressable>
       </View>
 
-      {range ? (
+      {mode === 'none' ? (
+        <View style={styles.noneBox}>
+          <AppText variant="small" color={colors.text3}>
+            {t.setup.notInGame}
+          </AppText>
+        </View>
+      ) : range ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${t.setup.rangeEdit}: ${t.setup.rangeSentence(t.roles[roleId].name, range.min, range.max)}`}
           onPress={() => setEditing(true)}
-          style={({ pressed }) => [styles.rangeBox, pressed && styles.rangePressed]}
+          style={({ pressed }) => [styles.rangeBox, { borderColor: error ? colors.danger.fg : colors.lamp.mid }, pressed && styles.pressed]}
         >
-          <View style={styles.rangeRow}>
-            <Dices size={18} color={colors.text2} />
-            <AppText variant="h2" color={error ? colors.danger.fg : colors.text1} style={styles.rangeValue}>
-              {`${range.min} – ${range.max === undefined ? '∞' : range.max}`}
-            </AppText>
-          </View>
-          <AppText variant="caption" color={colors.text3}>
-            {t.setup.rangeEdit}
+          <AppText style={styles.rangeValue} color={error ? colors.danger.fg : colors.lamp.core}>
+            {`${range.min}–${range.max === undefined ? '∞' : range.max}`}
           </AppText>
+          <ChevronDown size={14} color={colors.lamp.core} />
         </Pressable>
       ) : (
-        <View style={styles.counter}>
-          <IconButton icon={Minus} label="−" variant="plain" size={44} onPress={count > 0 ? () => onChange(count - 1) : undefined} />
-          <AppText variant="h1" color={error ? colors.danger.fg : isNone ? colors.text3 : colors.text1} style={styles.value}>
-            {count}
-          </AppText>
-          <IconButton icon={Plus} label="+" variant="plain" size={44} onPress={!full && count < limit ? () => onChange(count + 1) : undefined} />
-        </View>
+        <Stepper
+          value={String(count)}
+          valueColor={error ? colors.danger.fg : colors.text1}
+          onMinus={() => onChange(count - 1)}
+          onPlus={() => onChange(count + 1)}
+          minusDisabled={count <= 0}
+          plusDisabled={!!full || count >= limit}
+        />
       )}
 
-      <View style={styles.toggles}>
-        <Toggle label={t.setup.none} selected={isNone} onPress={() => onChange(0)} />
-        <Toggle label={t.setup.random} icon selected={!!range} onPress={() => onChange(range ? slot : { min: 0 })} />
+      <View accessibilityRole="radiogroup" style={styles.segment}>
+        {(['none', 'fixed', 'random'] as const).map((m) => (
+          <Pressable
+            key={m}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: mode === m }}
+            onPress={() => setMode(m)}
+            style={[styles.segmentItem, mode === m && styles.segmentOn]}
+          >
+            <AppText numberOfLines={1} adjustsFontSizeToFit color={mode === m ? (m === 'random' ? colors.lamp.core : colors.text1) : colors.text2} style={styles.segmentText}>
+              {m === 'none' ? t.setup.none : m === 'fixed' ? t.setup.fixed : t.setup.random}
+            </AppText>
+          </Pressable>
+        ))}
       </View>
 
       <RoleInfoSheet roleId={roleId} visible={infoOpen} onClose={() => setInfoOpen(false)} />
@@ -107,70 +125,37 @@ export function RoleSlotCard({ roleId, slot, onChange, players, limit, full, err
   );
 }
 
-
-function Toggle({ label, icon, selected, onPress }: { label: string; icon?: boolean; selected: boolean; onPress: () => void }) {
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      onPress={onPress}
-      style={[styles.toggle, selected && styles.toggleOn]}
-    >
-      {icon ? <Dices size={13} color={selected ? colors.text1 : colors.text2} /> : null}
-      <AppText variant="caption" color={selected ? colors.text1 : colors.text2} numberOfLines={1}>
-        {label}
-      </AppText>
-    </Pressable>
-  );
-}
+type Mode = 'none' | 'fixed' | 'random';
 
 const styles = StyleSheet.create({
-  card: { gap: space[3], padding: space[3], borderRadius: radius.md, borderWidth: 1, backgroundColor: colors.surface1, overflow: 'hidden' },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  card: { gap: space[3], padding: space[3], borderRadius: radius.md, borderWidth: 2, backgroundColor: colors.surface1 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: 48 },
+  faded: { opacity: 0.55 },
   name: { flex: 1 },
-  info: {
-    width: 32,
-    height: 32,
+  info: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  noneBox: {
+    minHeight: 36,
     borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.lineStrong,
-    backgroundColor: colors.surface2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  counter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: 76,
-    borderRadius: radius.sm,
-    backgroundColor: colors.bg1,
-  },
-  value: { fontVariant: ['tabular-nums'] },
-  // Rastgele: iki satır (en az / en çok); sabit sayaçla aynı yükseklikte, kart boyu değişmesin.
-  rangeBox: {
-    height: 76,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-    borderRadius: radius.sm,
-    backgroundColor: colors.bg1,
-    paddingHorizontal: space[2],
-  },
-  rangePressed: { backgroundColor: colors.surface3 },
-  rangeRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  rangeValue: { fontVariant: ['tabular-nums'] },
-  toggles: { flexDirection: 'row', gap: 6 },
-  toggle: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 4,
-    height: 36,
-    borderRadius: radius.sm,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
     borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  toggleOn: { backgroundColor: colors.surface3, borderColor: colors.lineStrong },
+  rangeBox: {
+    minHeight: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space[2],
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    backgroundColor: colors.bg0,
+  },
+  pressed: { backgroundColor: colors.surface3 },
+  rangeValue: { fontFamily: fonts.bodyBold, fontSize: 15, fontVariant: ['tabular-nums'] },
+  segment: { flexDirection: 'row', height: 30, padding: 2, borderRadius: radius.pill, backgroundColor: colors.bg0, borderWidth: 1, borderColor: colors.line },
+  segmentItem: { flex: 1, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2 },
+  segmentOn: { backgroundColor: colors.wood },
+  segmentText: { fontFamily: fonts.bodyBold, fontSize: 11, lineHeight: 14 },
 });

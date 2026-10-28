@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { Search, Sparkles, type LucideIcon } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
+import type { Icon } from '@/components/icons/types';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { RoleCard } from '@/components/role/RoleCard';
@@ -13,14 +14,17 @@ import type { TeamId } from '@/game/types';
 import type { Translation } from '@/i18n/types';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { TEAM_VISUALS } from '@/theme/teams';
-import { colors, radius, space } from '@/theme/tokens';
+import { colors, gutter, puppet, radius, space } from '@/theme/tokens';
+import { ToggleChip } from '@/components/ui/ToggleChip';
 import { TextField } from '@/components/ui/TextField';
 import { GroupHeader } from '@/components/role/GroupHeader';
+import { TEAM_ORDER } from '@/components/role/roleOrder';
 
 type Filter = TeamId | 'all';
-const TEAMS: TeamId[] = ['village', 'vampire', 'neutral'];
+/** Izgara aralığı (tasarım 08). */
+const GRID_GAP = 12;
 
-type Section = { key: string; title: string; icon: LucideIcon; color: string; ids: RoleId[] };
+type Section = { key: string; title: string; icon: Icon; color: string; ids: RoleId[] };
 
 const norm = (s: string) => s.toLocaleLowerCase('tr');
 
@@ -40,8 +44,8 @@ export default function Encyclopedia() {
   // "Hepsi"nde önce klasik karakterler, sonra diğerleri takımlarına göre; takım sekmesinde yalnızca o takım.
   const classic = filter === 'all' ? CLASSIC_ROLES.filter((id) => visible.includes(id)) : [];
   const sections: Section[] = [
-    ...(classic.length ? [{ key: 'classic', title: t.encyclopedia.classic, icon: Sparkles, color: colors.text1, ids: classic }] : []),
-    ...TEAMS.filter((team) => filter === 'all' || filter === team).map((team) => ({
+    ...(classic.length ? [{ key: 'classic', title: t.encyclopedia.classic, icon: TEAM_VISUALS.village.icon, color: colors.text1, ids: classic }] : []),
+    ...TEAM_ORDER.filter((team) => filter === 'all' || filter === team).map((team) => ({
       key: team,
       title: t.teams[team].name,
       icon: TEAM_VISUALS[team].icon,
@@ -67,26 +71,17 @@ export default function Encyclopedia() {
           placeholder={t.encyclopedia.search}
         />
       </View>
-      <View style={styles.tabs}>
-        {(['all', ...TEAMS] as Filter[]).map((f) => {
-          const selected = f === filter;
-          const visual = f === 'all' ? undefined : TEAM_VISUALS[f];
-          return (
-            <Pressable
-              key={f}
-              accessibilityRole="tab"
-              accessibilityState={{ selected }}
-              onPress={() => setFilter(f)}
-              style={[styles.tab, selected && styles.tabSelected]}
-            >
-              {visual ? <visual.icon size={14} color={visual.fg} /> : null}
-              <AppText variant="button" color={selected ? colors.text1 : colors.text2} style={styles.tabText}>
-                {f === 'all' ? t.encyclopedia.all : t.teams[f].name}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs} style={styles.tabsBox}>
+        {(['all', ...TEAM_ORDER] as Filter[]).map((f) => (
+          <ToggleChip
+            key={f}
+            label={f === 'all' ? t.encyclopedia.all : t.teams[f].name}
+            dot={f === 'all' ? undefined : puppet.team[f]}
+            selected={f === filter}
+            onPress={() => setFilter(f)}
+          />
+        ))}
+      </ScrollView>
 
       {visible.length === 0 ? (
         <View style={styles.empty}>
@@ -123,29 +118,11 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
   searchRow: { flexDirection: 'row' },
-  tabs: {
-    flexDirection: 'row',
-    gap: 4,
-    padding: 4,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface1,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 4,
-    height: 40,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabSelected: { backgroundColor: colors.surface3 },
-  tabText: { fontSize: 14 },
+  tabsBox: { marginHorizontal: -gutter, flexGrow: 0 },
+  tabs: { gap: space[2], paddingHorizontal: gutter },
   section: { gap: space[3] },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
-  gridCell: { width: '33.333%', padding: 6 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -GRID_GAP / 2 },
+  gridCell: { width: '33.333%', paddingHorizontal: GRID_GAP / 2, paddingBottom: space[4] },
   empty: {
     alignItems: 'center',
     gap: space[3],

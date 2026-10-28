@@ -1,5 +1,5 @@
 import { Cinzel_700Bold } from '@expo-google-fonts/cinzel';
-import { FiraSans_400Regular, FiraSans_600SemiBold, FiraSans_700Bold } from '@expo-google-fonts/fira-sans';
+import { Karla_400Regular, Karla_400Regular_Italic, Karla_600SemiBold, Karla_700Bold } from '@expo-google-fonts/karla';
 import { PirataOne_400Regular } from '@expo-google-fonts/pirata-one';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -19,9 +19,10 @@ export default function RootLayout() {
   const [loaded, error] = useFonts({
     PirataOne_400Regular,
     Cinzel_700Bold,
-    FiraSans_400Regular,
-    FiraSans_600SemiBold,
-    FiraSans_700Bold,
+    Karla_400Regular,
+    Karla_400Regular_Italic,
+    Karla_600SemiBold,
+    Karla_700Bold,
   });
 
   useEffect(() => {

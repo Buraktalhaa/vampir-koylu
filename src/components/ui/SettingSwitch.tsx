@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
-import { colors, DEFAULT_PHASE, phases, radius, space } from '@/theme/tokens';
+import { colors, radius, space } from '@/theme/tokens';
 
 import { AppText } from '@/components/ui/AppText';
 
@@ -15,7 +15,6 @@ type Props = {
 
 /** Ayar satırı: başlık + açıklama + sağa sola kaydırılan anahtar. Satırın tamamı dokunulabilir. */
 export function SettingSwitch({ label, hint, value, onChange, bare }: Props) {
-  const { accent } = phases[DEFAULT_PHASE];
   return (
     <Pressable
       accessibilityRole="switch"
@@ -24,9 +23,9 @@ export function SettingSwitch({ label, hint, value, onChange, bare }: Props) {
       style={[styles.row, bare && styles.bare]}
     >
       <View style={styles.text}>
-        <AppText variant="button">{label}</AppText>
+        <AppText>{label}</AppText>
         {hint ? (
-          <AppText variant="small" color={colors.text2}>
+          <AppText variant="small" color={colors.text2} style={styles.hint}>
             {hint}
           </AppText>
         ) : null}
@@ -34,9 +33,9 @@ export function SettingSwitch({ label, hint, value, onChange, bare }: Props) {
       <Switch
         value={value}
         onValueChange={onChange}
-        trackColor={{ true: accent, false: colors.line }}
-        thumbColor={colors.text1}
-        ios_backgroundColor={colors.line}
+        trackColor={{ true: colors.lamp.mid, false: '#2A1A12' }}
+        thumbColor={value ? colors.lamp.core : colors.text2}
+        ios_backgroundColor="#2A1A12"
       />
     </Pressable>
   );
@@ -49,10 +48,11 @@ const styles = StyleSheet.create({
     gap: space[3],
     padding: space[4],
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.line,
     backgroundColor: colors.surface1,
   },
   bare: { borderWidth: 0, borderRadius: 0, minHeight: 64 },
-  text: { flex: 1, gap: space[1] },
+  text: { flex: 1, gap: 2 },
+  hint: { fontSize: 13, lineHeight: 18 },
 });

@@ -9,7 +9,7 @@ import { Screen } from '@/components/ui/Screen';
 import type { Player, TeamId } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { TEAM_VISUALS } from '@/theme/teams';
-import { colors, radius, space } from '@/theme/tokens';
+import { phases, radius, space } from '@/theme/tokens';
 
 type Props = { header: ReactNode; summary: ReactNode; target: Player; team: TeamId; onDone: () => void };
 
@@ -44,8 +44,8 @@ const styles = StyleSheet.create({
     paddingVertical: space[8],
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface1,
+    borderColor: phases.night.border,
+    backgroundColor: phases.night.surface,
   },
   center: { textAlign: 'center' },
   team: {

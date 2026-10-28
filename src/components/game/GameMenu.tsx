@@ -44,9 +44,9 @@ export function GameMenu({ onRestart, onQuit }: Props) {
         accessibilityLabel={t.game.menuTitle}
         onPress={() => setOpen(true)}
         hitSlop={8}
-        style={[styles.trigger, { top: insets.top + space[3] }]}
+        style={[styles.trigger, { top: insets.top + space[2] }]}
       >
-        <Settings size={18} color={colors.text2} />
+        <Settings size={24} color={colors.text1} />
       </Pressable>
 
       <BottomSheet visible={open} onClose={() => setOpen(false)} closeLabel={t.game.close}>
@@ -84,11 +84,11 @@ export function GameMenu({ onRestart, onQuit }: Props) {
 const styles = StyleSheet.create({
   trigger: {
     position: 'absolute',
-    right: space[4],
-    width: 36,
-    height: 36,
+    right: space[3],
+    width: 44,
+    height: 44,
     borderRadius: radius.pill,
-    backgroundColor: colors.surface2,
+    backgroundColor: 'rgba(11, 7, 5, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
   },

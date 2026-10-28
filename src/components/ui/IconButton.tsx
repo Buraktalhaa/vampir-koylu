@@ -1,10 +1,10 @@
-import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet } from 'react-native';
 
+import type { Icon as IconComponent } from '@/components/icons/types';
 import { colors, radius } from '@/theme/tokens';
 
 type Props = {
-  icon: LucideIcon;
+  icon: IconComponent;
   /** Verilmezse buton pasif (soluk) görünür. */
   onPress?: () => void;
   label?: string;
@@ -35,8 +35,8 @@ export function IconButton({ icon: Icon, onPress, label, variant = 'round', size
 }
 
 const styles = StyleSheet.create({
-  round: { borderRadius: radius.pill, borderWidth: 1, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
+  round: { borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.wood, backgroundColor: colors.bg0, alignItems: 'center', justifyContent: 'center' },
   plain: { height: '100%', alignItems: 'center', justifyContent: 'center' },
-  off: { opacity: 0.35 },
-  pressed: { opacity: 0.7 },
+  off: { opacity: 0.38 },
+  pressed: { backgroundColor: colors.surface3 },
 });

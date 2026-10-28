@@ -58,7 +58,10 @@ Komut iskeleti kurar; sonra şunları doldur:
 
 1. `src/game/roles/<id>.ts` — kurallar (yetenekler, oy ağırlığı, kazanma koşulu…)
 2. `src/i18n/locales/tr.ts` ve `en.ts` — `TODO` metinleri (isim, açıklama, ⓘ detayı, yetenek metinleri)
-3. `src/theme/roles.ts` — ikon ([lucide.dev/icons](https://lucide.dev/icons))
+3. `assets/portraits/<id>.svg` ve `<id>-small.svg` — gölge kukla portresi (komut geçici olarak Köylü'yü kopyalar).
+   Kurallar: `design/puppet/PORTRE_KILAVUZU.md`. Çizim kaynağı `scripts/art/portraits.py`
+   (`python3 scripts/art/portraits.py assets/portraits`); SVG'ler değişince `npm run portraits`.
+   Sahne, an, amblem, avatar ve logo değişince `npm run art`
 4. `__tests__/role-<id>-test.ts` — kural testleri
 5. `npm test` — metinlerde `TODO` kaldıysa test başarısız olur
 
@@ -91,11 +94,15 @@ dosyası yalnızca oyun motorunun dışından kullanılır (döngüsel import ol
 | `src/components/role/` | Karakter kartı, madalyon, rol rozeti, takım etiketi |
 | `src/components/setup/` | Kurulum parçaları: karakter kartı (`RoleSlotCard`), aralık paneli (`RangeSheet`) |
 | `src/feedback/` | Müzik, ses efektleri, titreşim ve uygulama ayarları |
-| `src/components/art/` | Ana menü görseli ve rastgele gece manzaraları (SVG) |
+| `src/components/art/` | Ana menü görseli, rastgele gece manzaraları, kukla perdesi ışığı (SVG) |
 | `src/components/icons/` | Lucide'da olmayan özel ikonlar (ör. yarasa) |
 | `src/i18n/` | Dil desteği: `types.ts` (metin yapısı), `locales/tr.ts`, `locales/en.ts` |
 | `src/store/` | Kurulum taslağı ve devam eden oyunun kaydı |
-| `src/theme/` | Tasarım token'ları, takım ve rol görselleri |
+| `src/theme/` | Tasarım token'ları, faz bağlamı, takım görselleri, portreler ve çizimler (`*.generated.ts` dosyaları betikle üretilir, elle düzenlenmez) |
+| `assets/portraits/` | Karakter portreleri (SVG, `#TEAM` = takım rengi yer tutucusu) |
+| `assets/art/` | Sahneler (menü, 6 gece, 3 gündüz), dramatik anlar, takım amblemleri, oyuncu avatarları, logo (SVG) |
+| `assets/brand/` | Uygulama ikonu, Android uyarlanabilir ikon, açılış ekranı |
+| `design/puppet/` | Gölge Kukla tasarım kaynakları: portre kılavuzu, renk/yazı/hareket tabloları, bileşen tablosu, 13 ekran çizimi ve ölçü notları (`screens/`) |
 | `src/hooks/` | Ortak hook'lar (ör. geri sayım) |
 
 ## Bağımlılık politikası
@@ -107,8 +114,9 @@ Dışarıdan yalnızca yaygın ve köklü kütüphaneler kullanılır; küçük 
 | `expo-*`, `react-native-*` | Expo'nun kendi modülleri ve Expo Router'ın zorunlu bağımlılıkları |
 | `react-native-svg` | SVG çizimler (madalyonlar, sahneler, geri sayım halkası) |
 | `@react-native-async-storage/async-storage` | Oyuncu listesi, ayarlar ve devam eden oyunun kaydı |
-| `@expo-google-fonts/*` | Cinzel, Fira Sans, Pirata One fontları |
+| `@expo-google-fonts/*` | Cinzel, Karla, Pirata One fontları |
 | `lucide-react-native` | İkon seti |
+| `react-native-reanimated` | Hareket: kukla parçaları, faz geçişi, basma, giriş animasyonları (hareket azaltma ayarına uyar) |
 | `expo-audio` | Müzik ve ses efektleri (sesler projede kodla üretildi, bkz. `assets/audio/LICENSES.md`) |
 | `jest`, `jest-expo` (geliştirme) | Testler |
 

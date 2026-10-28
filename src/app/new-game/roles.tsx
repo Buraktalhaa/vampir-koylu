@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Check, ChevronRight, CircleAlert, Dices, Sparkles } from 'lucide-react-native';
+import { ChevronRight, CircleX } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/AppText';
@@ -21,17 +21,17 @@ import {
   type RoleId,
   type RoleSetup,
   type SetupError,
-  type TeamId,
 } from '@/game';
 import type { Translation } from '@/i18n/types';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { useGame } from '@/store/GameProvider';
-import { colors, radius, space } from '@/theme/tokens';
+import { colors, space } from '@/theme/tokens';
+import { InfoBand } from '@/components/ui/InfoBand';
+import { ToggleChip } from '@/components/ui/ToggleChip';
 import { GroupHeader } from '@/components/role/GroupHeader';
+import { TEAM_ORDER } from '@/components/role/roleOrder';
 import { TEAM_VISUALS } from '@/theme/teams';
 
-/** Kurulum ekranındaki grup sırası. */
-const TEAM_ORDER: TeamId[] = ['village', 'vampire', 'neutral'];
 
 function errorText(t: Translation, e: SetupError): string {
   switch (e.code) {
@@ -57,7 +57,7 @@ function errorRole(e: SetupError): RoleId | undefined {
 
 /** Kurulum 2/3: karakter dağılımı (Yok / Rastgele / sayı). */
 export default function RolesStep() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { draft, updateDraft } = useGame();
   const { names, setup } = draft;
   const players = names.length;
@@ -71,7 +71,7 @@ export default function RolesStep() {
   const isAllRandom = sameSetup(setup, allRandomSetup());
   // En üstte klasik karakterler, altında diğerleri takımlarına göre.
   const groups = [
-    { key: 'classic', icon: Sparkles, title: t.encyclopedia.classic, color: colors.text1, ids: CLASSIC_ROLES },
+    { key: 'classic', icon: TEAM_VISUALS.village.icon, title: t.encyclopedia.classic, color: colors.text1, ids: CLASSIC_ROLES },
     ...TEAM_ORDER.map((team) => ({
       key: team,
       icon: TEAM_VISUALS[team].icon,
@@ -86,65 +86,39 @@ export default function RolesStep() {
 
   return (
     <Screen
+      footerSurface
       footer={
-        <Button
-          label={errors.length ? t.setup.fixFirst : t.setup.next}
-          trailingIcon={errors.length ? undefined : ChevronRight}
-          disabled={errors.length > 0}
-          onPress={() => router.push('/new-game/settings')}
-        />
+        <>
+          <View style={styles.slots}>
+            <AppText variant="caption" color={colors.text2}>
+              {t.setup.slotsLabel.toLocaleUpperCase(language)}
+            </AppText>
+            <AppText variant="h1" color={errors.length ? colors.danger.fg : colors.text1}>
+              {t.setup.summaryCount(errors.length ? shown : players, players)}
+            </AppText>
+          </View>
+          {errors.map((e) => (
+            <InfoBand key={e.code} icon={CircleX} tone="danger" text={errorText(t, e)} />
+          ))}
+          {!errors.length ? (
+            <AppText variant="small" color={colors.text2}>
+              {t.setup.summaryDetail(fixed, randomCount)}
+            </AppText>
+          ) : null}
+          <Button
+            label={t.setup.next}
+            trailingIcon={errors.length ? undefined : ChevronRight}
+            disabled={errors.length > 0}
+            onPress={() => router.push('/new-game/settings')}
+          />
+        </>
       }
     >
       <ScreenHeader title={t.setup.roles} step={[2, 3]} stepLabel={t.setup.step(2, 3)} />
 
-      {errors.length ? (
-        <View accessibilityRole="alert" style={[styles.summary, styles.summaryError]}>
-          <View style={styles.summaryRow}>
-            <CircleAlert size={20} color={colors.danger.fg} />
-            <AppText variant="h3" color={colors.danger.fg}>
-              {t.setup.summaryCount(shown, players)}
-            </AppText>
-            <AppText variant="small" color={colors.danger.fg}>
-              · {t.setup.issues(errors.length)}
-            </AppText>
-          </View>
-          {errors.map((e) => (
-            <AppText key={e.code} variant="small" color={colors.danger.fg}>
-              • {errorText(t, e)}
-            </AppText>
-          ))}
-        </View>
-      ) : (
-        <View style={[styles.summary, styles.summaryOk]}>
-          <View style={styles.summaryRow}>
-            <Check size={20} color={colors.success.fg} />
-            <AppText variant="h2" style={styles.flex}>
-              {t.setup.summaryCount(players, players)}
-            </AppText>
-            <AppText variant="small" color={colors.text2}>
-              {t.setup.summaryDetail(fixed, randomCount)}
-            </AppText>
-          </View>
-        </View>
-      )}
-
       <View style={styles.presets}>
-        <View style={styles.flex}>
-          <Button
-            label={t.setup.classicMode}
-            variant={isClassic ? 'primary' : 'secondary'}
-            icon={isClassic ? Check : Sparkles}
-            onPress={() => updateDraft({ setup: classicSetup() })}
-          />
-        </View>
-        <View style={styles.flex}>
-          <Button
-            label={t.setup.allRandom}
-            variant={isAllRandom ? 'primary' : 'secondary'}
-            icon={isAllRandom ? Check : Dices}
-            onPress={() => updateDraft({ setup: allRandomSetup() })}
-          />
-        </View>
+        <ToggleChip label={t.setup.classicMode} check selected={isClassic} onPress={() => updateDraft({ setup: classicSetup() })} />
+        <ToggleChip label={t.setup.allRandom} check selected={isAllRandom} onPress={() => updateDraft({ setup: allRandomSetup() })} />
       </View>
 
       {groups.map(({ key, icon, title, color, ids }) => (
@@ -173,12 +147,9 @@ export default function RolesStep() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  summary: { gap: space[1], paddingVertical: space[3], paddingHorizontal: 14, borderRadius: radius.md, borderWidth: 1 },
-  summaryOk: { borderColor: colors.success.fg, backgroundColor: colors.success.bg },
-  summaryError: { borderColor: colors.danger.fill, backgroundColor: colors.team.vampire.bg },
-  summaryRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  slots: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   section: { gap: space[2] },
-  presets: { flexDirection: 'row', gap: space[2] },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
-  cell: { width: '50%', padding: 5 },
+  presets: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
+  cell: { width: '50%', padding: 6 },
 });

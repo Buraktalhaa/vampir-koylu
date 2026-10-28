@@ -10,11 +10,12 @@
  * Yaptıkları:
  *  1. src/game/roles/<id>.ts  — kural tanımı (şablon)
  *  2. src/game/roles/index.ts — karakter listesine ekler
- *  3. src/theme/roles.ts      — geçici ikon (sonra değiştir)
+ *  3. assets/portraits/<id>.svg ve <id>-small.svg — geçici portre (Köylü'nün kopyası; sonra çiz)
  *  4. src/i18n/locales/tr.ts ve en.ts — "TODO" metinleri (doldurulmadan testler geçmez)
  *  5. __tests__/role-<id>-test.ts — kural testleri için iskelet
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -66,11 +67,11 @@ index = index.replace(/(\nimport \{ \w+ \} from '@\/game\/roles\/\w+';)(?![\s\S]
 index = index.replace(/const ROLE_LIST = \[([^\]]*)\]/, (_, list) => `const ROLE_LIST = [${list.trim()}, ${id}]`);
 write('src/game/roles/index.ts', index);
 
-// 3) Geçici ikon
-let icons = read('src/theme/roles.ts');
-if (!/\bCircleHelp\b/.test(icons)) icons = icons.replace(/import \{ ([^}]*) \} from 'lucide-react-native';/, (_, names) => `import { ${['CircleHelp', ...names.split(',').map((n) => n.trim())].sort().join(', ')} } from 'lucide-react-native';`);
-icons = insertBeforeClose(icons, 'export const ROLE_ICONS', '', `  ${id}: CircleHelp, // TODO: uygun ikonu seç (lucide.dev/icons)\n`);
-write('src/theme/roles.ts', icons);
+// 3) Geçici portre (design/puppet/PORTRE_KILAVUZU.md'ye göre gerçeğini çiz)
+for (const suffix of ['', '-small']) {
+  copyFileSync(path(`assets/portraits/villager${suffix}.svg`), path(`assets/portraits/${id}${suffix}.svg`));
+}
+execFileSync('node', [path('scripts/build-portraits.mjs')], { stdio: 'inherit' });
 
 // 4) Metinler (TODO kalırsa i18n testi hata verir)
 for (const lang of ['tr', 'en']) {
@@ -109,6 +110,6 @@ describe('${id}', () => {
 console.log(`✔ ${id} (${team}) eklendi. Şimdi:
   1. ${roleFile} — kuralları yaz
   2. src/i18n/locales/tr.ts ve en.ts — TODO metinlerini doldur
-  3. src/theme/roles.ts — ikonu seç
+  3. assets/portraits/${id}.svg + ${id}-small.svg — portreyi çiz (design/puppet/PORTRE_KILAVUZU.md), sonra npm run portraits
   4. __tests__/role-${id}-test.ts — testlerini yaz
   5. npm test`);

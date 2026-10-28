@@ -1,6 +1,7 @@
 import { Vote } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
@@ -10,7 +11,7 @@ import { Stepper } from '@/components/ui/Stepper';
 import { PhaseHeader } from '@/components/game/PhaseHeader';
 import { alivePlayers, getRole, type GameState, type PlayerId } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
-import { colors, phases, radius, space } from '@/theme/tokens';
+import { colors, fonts, radius, space } from '@/theme/tokens';
 import { Chip } from '@/components/ui/Chip';
 
 /** Açık oylama: telefon ortada; toplam oy hayattaki oyuncu sayısını aşamaz. */
@@ -32,56 +33,44 @@ export function OpenVote({ game, onDone }: { game: GameState; onDone: (counts: R
       footer={
         <Button
           label={leaders.length === 1 ? t.game.finishWill(leaders[0].name) : t.game.finishNobody}
-          phase="day"
           onPress={() => onDone(counts)}
         />
       }
     >
       <PhaseHeader icon={Vote} phase="day" title={t.game.day(game.round)} subtitle={t.game.openSub} />
-      <AppText variant="h1">{t.game.openTitle}</AppText>
-      <View style={styles.sectionHead}>
+      <View style={styles.titleRow}>
+        <AppText variant="h1" style={styles.flex1}>
+          {t.game.openTitle}
+        </AppText>
         <AppText variant="small" color={colors.text2}>
           {t.game.votesGiven(given, totalVotes)}
         </AppText>
-        {tie ? (
-          <AppText variant="small" color={colors.warning.fg}>
-            {t.game.tie}
-          </AppText>
-        ) : given < totalVotes ? (
-          <AppText variant="small" color={phases.day.accent}>
-            {t.game.notVoted(totalVotes - given)}
-          </AppText>
-        ) : null}
       </View>
-      <View style={styles.openGrid}>
+      {tie ? (
+        <AppText variant="small" color={colors.warning.fg}>
+          {t.game.tie}
+        </AppText>
+      ) : given < totalVotes ? (
+        <AppText variant="small" color={colors.lamp.core}>
+          {t.game.notVoted(totalVotes - given)}
+        </AppText>
+      ) : null}
+      <View style={styles.list}>
         {alive.map((p) => {
           const n = counts[p.id] ?? 0;
           const isLeader = leaders.some((l) => l.id === p.id);
           return (
-            <View key={p.id} style={styles.openCell}>
-              <View
-                style={[
-                  styles.openCard,
-                  isLeader && !tie && { borderColor: phases.day.accent, borderWidth: 2, backgroundColor: phases.day.selectBg },
-                  isLeader && tie && styles.openTie,
-                ]}
-              >
-                <View style={styles.openHead}>
-                  <PlayerAvatar name={p.name} size={28} />
-                  <AppText variant="button" numberOfLines={1} style={styles.flex1}>
-                    {p.name}
-                  </AppText>
-                  {isLeader ? (
-                    <Chip
-                      label={tie ? t.game.equal : t.game.leader}
-                      color={tie ? colors.warning.fg : colors.textInverse}
-                      borderColor={tie ? colors.warning.fg : phases.day.accent}
-                      background={tie ? colors.warning.bg : phases.day.accent}
-                    />
-                  ) : null}
-                </View>
+            <View key={p.id} style={[styles.row, isLeader && (tie ? styles.rowTie : styles.rowLeader)]}>
+              {isLeader && !tie ? <LeaderGlow /> : null}
+              <PlayerAvatar name={p.name} size={44} />
+              <AppText numberOfLines={1} style={[styles.flex1, styles.name]}>
+                {p.name}
+              </AppText>
+              {isLeader && tie ? <Chip label={t.game.equal} color={colors.warning.fg} shape="tag" /> : null}
+              <View style={styles.stepper}>
                 <Stepper
                   value={String(n)}
+                  valueColor={isLeader && !tie ? colors.lamp.core : colors.text1}
                   onMinus={() => change(p.id, -1)}
                   onPlus={() => change(p.id, 1)}
                   minusDisabled={n === 0}
@@ -96,19 +85,39 @@ export function OpenVote({ game, onDone }: { game: GameState; onDone: (counts: R
   );
 }
 
+/** Önde olan satırda soldan sızan kandil ışığı. */
+function LeaderGlow() {
+  return (
+    <Svg style={StyleSheet.absoluteFill} preserveAspectRatio="none" viewBox="0 0 10 10">
+      <Defs>
+        <LinearGradient id="vote-leader" x1="0" y1="0" x2="1" y2="0">
+          <Stop offset="0" stopColor={colors.lamp.mid} stopOpacity={0.28} />
+          <Stop offset="0.7" stopColor={colors.lamp.mid} stopOpacity={0} />
+        </LinearGradient>
+      </Defs>
+      <Rect width="10" height="10" fill="url(#vote-leader)" />
+    </Svg>
+  );
+}
+
 const styles = StyleSheet.create({
   flex1: { flex: 1 },
-  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  openGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
-  openCell: { width: '50%', padding: 5 },
-  openCard: {
+  titleRow: { flexDirection: 'row', alignItems: 'baseline', gap: space[2] },
+  list: { gap: space[2] },
+  row: {
+    minHeight: 64,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: space[3],
-    padding: space[3],
+    paddingHorizontal: space[3],
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.line,
     backgroundColor: colors.surface1,
+    overflow: 'hidden',
   },
-  openTie: { borderColor: colors.warning.fg, borderWidth: 2, borderStyle: 'dashed' },
-  openHead: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  rowLeader: { borderColor: colors.lamp.mid },
+  rowTie: { borderColor: colors.warning.fg, borderStyle: 'dashed' },
+  name: { fontFamily: fonts.bodyBold },
+  stepper: { width: 116 },
 });

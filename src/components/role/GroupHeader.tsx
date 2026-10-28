@@ -1,21 +1,24 @@
-import type { LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
+import type { Icon } from '@/components/icons/types';
 import { AppText } from '@/components/ui/AppText';
-import { colors, space } from '@/theme/tokens';
+import { usePhase } from '@/theme/PhaseContext';
+import { phases, space } from '@/theme/tokens';
 
-type Props = { icon: LucideIcon; title: string; color: string; count?: number };
+type Props = { icon?: Icon; title: string; color?: string; count?: number | string };
 
-/** Karakter grubu başlığı: ikon + büyük harfli ad + sağda adet (ör. "⌂ KÖY  11"). */
-export function GroupHeader({ icon: Icon, title, color, count }: Props) {
+/** Karakter grubu başlığı: amblem + büyük harfli ad + ince çizgi + sağda adet (ör. "⌂ KÖY ──── 9"). */
+export function GroupHeader({ icon: Icon, title, count }: Props) {
+  const { text2, border } = phases[usePhase()];
   return (
     <View style={styles.row}>
-      <Icon size={14} color={color} />
-      <AppText variant="caption" color={color} style={styles.title}>
+      {Icon ? <Icon size={20} /> : null}
+      <AppText variant="caption" color={text2}>
         {title.toLocaleUpperCase('tr')}
       </AppText>
+      <View style={[styles.line, { backgroundColor: border }]} />
       {count !== undefined ? (
-        <AppText variant="caption" color={colors.text3}>
+        <AppText variant="small" color={text2}>
           {count}
         </AppText>
       ) : null}
@@ -24,6 +27,6 @@ export function GroupHeader({ icon: Icon, title, color, count }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: space[1], marginTop: space[2] },
-  title: { flex: 1 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[2] },
+  line: { flex: 1, height: 1 },
 });

@@ -1,27 +1,20 @@
-import { Flame, Smartphone, Vote } from 'lucide-react-native';
+import { Flame, Info, Smartphone, Vote } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
+import { Moment } from '@/components/art/Moment';
+import { NightOrResult } from '@/components/game/NightOrResult';
+import { PhaseHeader } from '@/components/game/PhaseHeader';
+import { PlayerAvatar } from '@/components/player/PlayerAvatar';
+import { RolePortrait } from '@/components/role/RolePortrait';
+import { TeamBadge } from '@/components/role/TeamBadge';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
-import { PlayerAvatar } from '@/components/player/PlayerAvatar';
-import { Screen } from '@/components/ui/Screen';
-import { DeathCard } from '@/components/game/DeathCard';
-import { PhaseHeader } from '@/components/game/PhaseHeader';
-import {
-  type DeathEvent,
-  findPlayer,
-  type GameState,
-  type Player,
-  type PlayerId,
-  publicRoleOf,
-  type RoleId,
-} from '@/game';
-import { useLanguage } from '@/i18n/LanguageProvider';
-import { colors, phases, radius, space } from '@/theme/tokens';
-
-import { InfoBand } from '@/components/ui/InfoBand';
-import { NightOrResult } from '@/components/game/NightOrResult';
 import { Chip } from '@/components/ui/Chip';
+import { InfoBand } from '@/components/ui/InfoBand';
+import { Screen } from '@/components/ui/Screen';
+import { type DeathEvent, findPlayer, type GameState, getRole, type Player, type PlayerId, publicRoleOf, type RoleId } from '@/game';
+import { useLanguage } from '@/i18n/LanguageProvider';
+import { colors, radius, space } from '@/theme/tokens';
 
 type VerdictProps = {
   game: GameState;
@@ -31,6 +24,7 @@ type VerdictProps = {
   onDone: () => void;
 };
 
+/** Karar (tasarım 11 / 11b): asıldıysa darağacı ve (ayar açıksa) açıklanan rol; beraberlik ya da oysuzlukta terazi. */
 export function Verdict({ game, deaths, tally, pendingFor, onDone }: VerdictProps) {
   const { t } = useLanguage();
   const hanged = deaths.find((d) => d.cause === 'lynch');
@@ -43,27 +37,23 @@ export function Verdict({ game, deaths, tally, pendingFor, onDone }: VerdictProp
     return (
       <Screen phase="day" footer={<NightOrResult game={game} onPress={onDone} />}>
         {header}
-        <View style={styles.nobody}>
-          <View style={styles.iconOrb}>
-            <Vote size={30} color={phases.day.accent} />
+        <Moment id="tie" />
+        <AppText variant="display" style={styles.center}>
+          {t.game.nobodyHangedTitle}
+        </AppText>
+        <AppText color={colors.text2} style={styles.center}>
+          {tied.length > 1 ? t.game.tieText(tied.map(([id]) => findPlayer(game, id).name).join(', ')) : t.game.noVotesText}
+        </AppText>
+        {tied.length > 1 ? (
+          <View style={styles.tieRow}>
+            {tied.map(([id, n]) => (
+              <View key={id} style={styles.tieItem}>
+                <PlayerAvatar name={findPlayer(game, id).name} size={36} />
+                <Chip shape="tag" label={n} />
+              </View>
+            ))}
           </View>
-          <AppText variant="h1" style={styles.center}>
-            {t.game.nobodyHangedTitle}
-          </AppText>
-          <AppText color={colors.text2} style={styles.center}>
-            {tied.length > 1 ? t.game.tieText(tied.map(([id]) => findPlayer(game, id).name).join(', ')) : t.game.noVotesText}
-          </AppText>
-          {tied.length > 1 ? (
-            <View style={styles.tieRow}>
-              {tied.map(([id, n]) => (
-                <View key={id} style={styles.tieItem}>
-                  <PlayerAvatar name={findPlayer(game, id).name} size={24} />
-                  <Chip shape="tag" color={colors.text1} label={n} />
-                </View>
-              ))}
-            </View>
-          ) : null}
-        </View>
+        ) : null}
       </Screen>
     );
   }
@@ -77,23 +67,38 @@ export function Verdict({ game, deaths, tally, pendingFor, onDone }: VerdictProp
       phase="day"
       footer={
         pendingFor ? (
-          <Button label={t.game.giveToName(pendingFor.name)} phase="day" icon={Smartphone} onPress={onDone} />
+          <Button label={t.game.giveToName(pendingFor.name)} icon={Smartphone} onPress={onDone} />
         ) : (
           <NightOrResult game={game} onPress={onDone} />
         )
       }
     >
       {header}
-      <AppText variant="h1" style={styles.center}>
-        {t.game.villageDecided}
+      <Moment id="lynch" />
+      <AppText variant="display" style={styles.center}>
+        {t.game.hangedTitle(player.name)}
       </AppText>
-      <DeathCard name={player.name} subtitle={t.game.hangedWith(tally[player.id] ?? 0)} roleId={roleId} />
+      <AppText color={colors.text2} style={styles.center}>
+        {`${t.game.villageDecided}: ${t.game.hangedWith(tally[player.id] ?? 0)}`}
+      </AppText>
+      {roleId ? (
+        <View style={styles.roleCard}>
+          <RolePortrait roleId={roleId} size={48} />
+          <View style={styles.flex1}>
+            <AppText variant="small" color={colors.text2}>
+              {t.game.roleRevealed}
+            </AppText>
+            <AppText variant="h2" numberOfLines={1}>
+              {t.roles[roleId].name}
+            </AppText>
+          </View>
+          <TeamBadge team={getRole(roleId).team} />
+        </View>
+      ) : (
+        <InfoBand icon={Info} tone="warning" text={t.game.rolesAtEnd} />
+      )}
       {pendingFor ? (
-        <InfoBand
-          icon={Flame}
-          tone="warning"
-          text={reveal ? t.game.revengeTriggered(pendingFor.name) : t.game.lastChoice(pendingFor.name)}
-        />
+        <InfoBand icon={Flame} tone="warning" text={reveal ? t.game.revengeTriggered(pendingFor.name) : t.game.lastChoice(pendingFor.name)} />
       ) : null}
     </Screen>
   );
@@ -101,17 +106,17 @@ export function Verdict({ game, deaths, tally, pendingFor, onDone }: VerdictProp
 
 const styles = StyleSheet.create({
   center: { textAlign: 'center' },
-  nobody: { alignItems: 'center', gap: space[4], paddingTop: space[10] },
-  iconOrb: {
-    width: 96,
-    height: 96,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: '#5A3420',
-    backgroundColor: phases.day.selectBg,
+  flex1: { flex: 1 },
+  roleCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: space[3],
+    padding: space[4],
+    borderRadius: radius.md,
+    borderWidth: 2,
+    borderColor: colors.line,
+    backgroundColor: colors.surface1,
   },
-  tieRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-  tieItem: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
+  tieRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[4] },
+  tieItem: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
 });

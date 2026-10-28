@@ -1,21 +1,20 @@
 import { StyleSheet, View } from 'react-native';
 
+import { AppText } from '@/components/ui/AppText';
 import type { TeamId } from '@/game/types';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { TEAM_VISUALS } from '@/theme/teams';
 import { radius, space } from '@/theme/tokens';
 
-import { AppText } from '@/components/ui/AppText';
-
-/** Takım etiketi: sembol + renk + metin. */
+/** Takım etiketi (28 yükseklik): amblem + büyük harfli takım adı, takım renginde kenar. Bilgi yalnız renkte değil. */
 export function TeamBadge({ team }: { team: TeamId }) {
-  const { t } = useLanguage();
-  const { icon: Icon, fg, bg, line } = TEAM_VISUALS[team];
+  const { t, language } = useLanguage();
+  const { icon: Icon, fg } = TEAM_VISUALS[team];
   return (
-    <View style={[styles.badge, { backgroundColor: bg, borderColor: line }]}>
-      <Icon size={14} color={fg} strokeWidth={2} />
+    <View style={[styles.badge, { borderColor: fg }]}>
+      <Icon size={16} />
       <AppText variant="caption" color={fg}>
-        {t.teams[team].name}
+        {t.teams[team].name.toLocaleUpperCase(language)}
       </AppText>
     </View>
   );
@@ -26,10 +25,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space[1],
-    paddingHorizontal: space[2],
-    paddingVertical: space[1],
+    gap: space[2],
+    minHeight: 28,
+    paddingHorizontal: space[3],
     borderRadius: radius.pill,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
 });
