@@ -1,33 +1,35 @@
-import type { LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
+import type { Icon as IconComponent } from '@/components/icons/types';
 import { AppText } from '@/components/ui/AppText';
 import type { Phase } from '@/game/types';
-import { colors, phases, radius, space } from '@/theme/tokens';
+import { useLanguage } from '@/i18n/LanguageProvider';
+import { colors, phases, space } from '@/theme/tokens';
 
-type Props = { icon: LucideIcon; title: string; subtitle?: string; phase: Phase };
+type Props = {
+  icon: IconComponent;
+  title: string;
+  subtitle?: string;
+  phase: Phase;
+  /** Parlak kandil sahnesinin üstünde (ör. sabah): koyu metin. */
+  onLamp?: boolean;
+};
 
-/** Faz başlığı: "2. GECE · Sıra 2 / 7", "2. GÜN · Sabah · telefon ortada" ... */
-export function PhaseHeader({ icon: Icon, title, subtitle, phase }: Props) {
+/** Faz etiketi: "☾ GECE 2 · SIRA 2 / 7", "☀ 3. GÜN · SABAH". Sağda oyun menüsüne (⚙️) yer bırakır. */
+export function PhaseHeader({ icon: Icon, title, subtitle, phase, onLamp }: Props) {
+  const { language } = useLanguage();
+  const color = onLamp ? colors.textInverse : phase === 'night' ? phases.night.text2 : colors.lamp.core;
   return (
     <View style={styles.row}>
-      <View style={[styles.icon, { backgroundColor: phases[phase].selectBg }]}>
-        <Icon size={16} color={phases[phase].accent} />
-      </View>
-      <View style={styles.text}>
-        <AppText variant="h3">{title}</AppText>
-        {subtitle ? (
-          <AppText variant="small" color={colors.text2}>
-            {subtitle}
-          </AppText>
-        ) : null}
-      </View>
+      <Icon size={16} color={color} />
+      <AppText variant="caption" color={onLamp ? colors.textInverse : phases[phase].text2} numberOfLines={1} style={styles.text}>
+        {[title, subtitle].filter(Boolean).join(' · ').toLocaleUpperCase(language)}
+      </AppText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginTop: space[1], paddingRight: 40 },
-  icon: { width: 32, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: 44, paddingRight: 48 },
   text: { flex: 1 },
 });

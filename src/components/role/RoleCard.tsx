@@ -1,104 +1,37 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { RoleFigure } from '@/components/role/RoleFigure';
+import { AppText } from '@/components/ui/AppText';
 import { getRole, type RoleId } from '@/game/roles';
 import { useLanguage } from '@/i18n/LanguageProvider';
-import { TEAM_VISUALS } from '@/theme/teams';
-import { colors, radius, space } from '@/theme/tokens';
+import { space } from '@/theme/tokens';
 
-import { AppText } from '@/components/ui/AppText';
-import { RolePortrait } from '@/components/role/RolePortrait';
-import { RoleWatermark } from '@/components/role/RoleWatermark';
-
-type Props = {
-  roleId: RoleId;
-  /** cell: ansiklopedi ızgarası hücresi · large: rol açılışı ve detay kartı */
-  size?: 'cell' | 'large';
-  onPress?: () => void;
-  /** Büyük kartın altına eklenecek içerik (ör. etiketler). */
-  footer?: React.ReactNode;
-};
-
-/** Tüm karakterler için tek kart bileşeni — sadece veri değişir. */
-export function RoleCard({ roleId, size = 'cell', onPress, footer }: Props) {
+/** Ansiklopedi ızgarası hücresi (tasarım 08): kemerli kandil perdesinde büyük kukla + Cinzel ad. Genişliğe göre ölçeklenir. */
+export function RoleCard({ roleId, onPress }: { roleId: RoleId; onPress?: () => void }) {
   const { t } = useLanguage();
   const role = getRole(roleId);
   const text = t.roles[roleId];
-  const { icon: TeamIcon, fg, line, bg } = TEAM_VISUALS[role.team];
-
-  if (size === 'cell') {
-    return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${text.name}, ${t.teams[role.team].name}`}
-        onPress={onPress}
-        style={({ pressed }) => [styles.cell, { borderColor: line, backgroundColor: bg }, pressed && styles.pressed]}
-      >
-        <View>
-          <RolePortrait roleId={roleId} size={84} />
-          <View style={[styles.teamDot, { borderColor: line }]}>
-            <TeamIcon size={12} color={fg} />
-          </View>
-        </View>
-        <AppText variant="caption" numberOfLines={1} style={styles.cellName}>
-          {text.name}
-        </AppText>
-      </Pressable>
-    );
-  }
-
+  const [width, setWidth] = useState(0);
   return (
-    <View style={[styles.large, { borderColor: line, backgroundColor: bg }]}>
-      <View style={styles.teamRow}>
-        <TeamIcon size={14} color={fg} />
-        <AppText variant="caption" color={fg}>
-          {t.teams[role.team].name.toLocaleUpperCase('tr')}
-        </AppText>
-      </View>
-      <View style={styles.portraitArea}>
-        <RoleWatermark roleId={roleId} size={220} style={styles.bigWatermark} />
-        <RolePortrait roleId={roleId} size={128} />
-      </View>
-      <AppText variant="display">{text.name.toLocaleUpperCase('tr')}</AppText>
-      <AppText color={colors.text2}>{text.description}</AppText>
-      {footer}
-    </View>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${text.name}, ${t.teams[role.team].name}`}
+      onPress={onPress}
+      onLayout={(e) => setWidth(Math.floor(e.nativeEvent.layout.width))}
+      style={({ pressed }) => [styles.cell, pressed && styles.pressed]}
+    >
+      {width ? <RoleFigure roleId={roleId} width={width} animated={false} framed={false} /> : <View style={styles.placeholder} />}
+      <AppText variant="h3" numberOfLines={2} style={styles.name}>
+        {text.name}
+      </AppText>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  cell: { gap: space[2] },
   pressed: { opacity: 0.85, transform: [{ scale: 0.97 }] },
-  cell: {
-    alignItems: 'center',
-    gap: space[2],
-    paddingVertical: space[3],
-    paddingHorizontal: space[1],
-    borderRadius: radius.md,
-    borderWidth: 1,
-  },
-  teamDot: {
-    position: 'absolute',
-    right: -4,
-    bottom: -4,
-    width: 24,
-    height: 24,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    backgroundColor: colors.bg1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cellName: { fontSize: 13, color: colors.text1 },
-  large: { gap: space[3], padding: space[4], borderRadius: radius.lg + 4, borderWidth: 1 },
-  teamRow: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
-  portraitArea: {
-    height: 160,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.bg0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  bigWatermark: { right: -40, top: -30, opacity: 0.1 },
+  placeholder: { aspectRatio: 3 / 4 },
+  name: { fontSize: 14, lineHeight: 18, textAlign: 'center' },
 });

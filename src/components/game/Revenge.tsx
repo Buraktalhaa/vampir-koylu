@@ -19,7 +19,7 @@ import {
   teamOf,
 } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
-import { space } from '@/theme/tokens';
+import { colors, space } from '@/theme/tokens';
 
 import { InfoBand } from '@/components/ui/InfoBand';
 import { NightOrResult } from '@/components/game/NightOrResult';
@@ -82,7 +82,7 @@ export function Avenged({ game, deaths, onDone }: { game: GameState; deaths: Dea
           </View>
         </>
       ) : null}
-      <DeathCard name={victim.name} subtitle={avenger ? t.game.wentWith(avenger.name) : undefined} roleId={roleId} />
+      <DeathCard name={victim.name} subtitle={avenger ? t.game.wentWith(avenger.name) : undefined} roleId={roleId} moment="death" />
       {roleId && teamOf(victim) === 'vampire' ? <InfoBand icon={Info} tone="success" text={t.game.vampiresLeft(vampiresLeft)} /> : null}
     </Screen>
   );
@@ -91,5 +91,5 @@ export function Avenged({ game, deaths, onDone }: { game: GameState; deaths: Dea
 const styles = StyleSheet.create({
   center: { textAlign: 'center' },
   link: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2] },
-  rope: { width: 90, borderTopWidth: 2.5, borderStyle: 'dashed', borderColor: '#C9A26A' },
+  rope: { width: 90, borderTopWidth: 2.5, borderStyle: 'dashed', borderColor: colors.metal.brass },
 });

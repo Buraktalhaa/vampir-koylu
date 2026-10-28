@@ -1,9 +1,8 @@
 import { Minus, Plus } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { colors, radius, touch } from '@/theme/tokens';
-
 import { AppText } from '@/components/ui/AppText';
+import { colors, radius } from '@/theme/tokens';
 
 type Props = {
   value: string;
@@ -11,20 +10,22 @@ type Props = {
   onPlus: () => void;
   minusDisabled?: boolean;
   plusDisabled?: boolean;
+  /** Değer rengi (ör. oylamada lider: mum sarısı). */
+  valueColor?: string;
 };
 
-/** − değer + sayacı (44 · 24 · 44). */
-export function Stepper({ value, onMinus, onPlus, minusDisabled, plusDisabled }: Props) {
+/** − değer + sayacı: 36 yükseklik hap, koyu dolgu, ahşap kenar; sayı Cinzel. Dokunma alanı hitSlop ile 48. */
+export function Stepper({ value, onMinus, onPlus, minusDisabled, plusDisabled, valueColor = colors.text1 }: Props) {
   return (
     <View style={styles.row}>
-      <Pressable accessibilityRole="button" accessibilityLabel="−" onPress={onMinus} disabled={minusDisabled} style={styles.btn}>
-        <Minus size={18} color={minusDisabled ? colors.text3 : colors.text1} />
+      <Pressable accessibilityRole="button" accessibilityLabel="−" onPress={onMinus} disabled={minusDisabled} hitSlop={6} style={({ pressed }) => [styles.btn, pressed && styles.pressed, minusDisabled && styles.off]}>
+        <Minus size={16} color={colors.text1} />
       </Pressable>
-      <AppText variant="h3" style={styles.value}>
+      <AppText variant="h3" color={valueColor} style={styles.value}>
         {value}
       </AppText>
-      <Pressable accessibilityRole="button" accessibilityLabel="+" onPress={onPlus} disabled={plusDisabled} style={styles.btn}>
-        <Plus size={18} color={plusDisabled ? colors.text3 : colors.text1} />
+      <Pressable accessibilityRole="button" accessibilityLabel="+" onPress={onPlus} disabled={plusDisabled} hitSlop={6} style={({ pressed }) => [styles.btn, pressed && styles.pressed, plusDisabled && styles.off]}>
+        <Plus size={16} color={colors.text1} />
       </Pressable>
     </View>
   );
@@ -35,11 +36,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.lineStrong,
-    backgroundColor: colors.bg1,
+    minHeight: 36,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: colors.wood,
+    backgroundColor: colors.bg0,
   },
-  btn: { width: touch.min, height: touch.min, alignItems: 'center', justifyContent: 'center' },
-  value: { minWidth: 24, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  btn: { width: 36, height: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  pressed: { backgroundColor: colors.surface3 },
+  off: { opacity: 0.38 },
+  value: { minWidth: 28, textAlign: 'center', fontVariant: ['tabular-nums'] },
 });

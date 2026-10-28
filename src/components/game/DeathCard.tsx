@@ -1,51 +1,60 @@
-import { Flame } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { AppText } from '@/components/ui/AppText';
+import { Moment } from '@/components/art/Moment';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
-import type { RoleId } from '@/game/roles';
-import { colors, phases, radius, space } from '@/theme/tokens';
-
-import { RolePill } from '@/components/role/RolePill';
+import { RolePortrait } from '@/components/role/RolePortrait';
+import { TeamBadge } from '@/components/role/TeamBadge';
+import { AppText } from '@/components/ui/AppText';
+import { ROLES, type RoleId } from '@/game/roles';
+import { useLanguage } from '@/i18n/LanguageProvider';
+import { type MomentId, teamInlay } from '@/theme/art';
+import { usePhase } from '@/theme/PhaseContext';
+import { colors, motion, phases, radius, space } from '@/theme/tokens';
 
 type Props = {
   name: string;
   subtitle?: string;
   /** Açıklanacak rol (ayar kapalıysa null). */
   roleId?: RoleId | null;
-  compact?: boolean;
+  /** Kartın üstündeki an görseli (ör. sabah: düşmüş kukla). Kakması rol açıklanıyorsa takım rengi, değilse nötr deri. */
+  moment?: MomentId;
+  /** Birden çok kart sırayla belirir (kuklalar tek tek düşer). */
+  index?: number;
 };
 
-/** Ağırbaşlı ölüm kartı: mum, soluk avatar, isim, (varsa) rol. Sabah, oylama ve intikam ekranlarında ortak. */
-export function DeathCard({ name, subtitle, roleId, compact }: Props) {
+/** Ölüm kartı (tasarım 05): an görseli + madalyon (rol açıklanmıyorsa oyuncu avatarı) + ad + alt satır + takım etiketi. */
+export function DeathCard({ name, subtitle, roleId, moment, index = 0 }: Props) {
+  const { language } = useLanguage();
+  const theme = phases[usePhase()];
+  const team = roleId ? ROLES[roleId].team : undefined;
   return (
-    <View style={[styles.card, compact && styles.compact]}>
-      <Flame size={compact ? 18 : 22} color={phases.day.accent} />
-      <PlayerAvatar name={name} size={compact ? 56 : 96} dimmed />
-      <AppText variant={compact ? 'h2' : 'display'} style={styles.center} numberOfLines={2}>
-        {name.toLocaleUpperCase('tr')}
-      </AppText>
-      {subtitle ? (
-        <AppText variant="small" color={colors.text2} style={styles.center}>
-          {subtitle}
-        </AppText>
-      ) : null}
-      {roleId ? <RolePill roleId={roleId} withTeam /> : null}
-    </View>
+    <Animated.View
+      entering={FadeInDown.delay(300 + index * 180).duration(motion.deathDrop)}
+      style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
+    >
+      {moment ? <Moment id={moment} inlay={teamInlay(team, !roleId)} variant="bare" style={styles.moment} /> : null}
+      <View style={styles.row}>
+        {roleId ? <RolePortrait roleId={roleId} size={56} /> : <PlayerAvatar name={name} size={56} dimmed />}
+        <View style={styles.text}>
+          <AppText variant="h1" numberOfLines={1} adjustsFontSizeToFit>
+            {name.toLocaleUpperCase(language)}
+          </AppText>
+          {subtitle ? (
+            <AppText variant="small" color={theme.text2}>
+              {subtitle}
+            </AppText>
+          ) : null}
+        </View>
+      </View>
+      {team ? <TeamBadge team={team} /> : null}
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    alignItems: 'center',
-    gap: space[3],
-    paddingVertical: space[6],
-    paddingHorizontal: space[5],
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: '#5A3420',
-    backgroundColor: 'rgba(43, 21, 15, 0.7)',
-  },
-  compact: { flex: 1, paddingVertical: space[4], paddingHorizontal: space[2], gap: space[2] },
-  center: { textAlign: 'center' },
+  card: { gap: space[3], padding: 14, borderRadius: radius.md, borderWidth: 2, boxShadow: '0px 12px 14px rgba(0, 0, 0, 0.55)' },
+  moment: { borderRadius: 10, backgroundColor: colors.bg0 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  text: { flex: 1, gap: 2 },
 });

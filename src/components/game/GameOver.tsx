@@ -1,20 +1,27 @@
 import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Moon, Sun } from 'lucide-react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
+import { Moment } from '@/components/art/Moment';
+import { GroupHeader } from '@/components/role/GroupHeader';
+import { RolePortrait } from '@/components/role/RolePortrait';
+import { ActionBar } from '@/components/ui/ActionBar';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
-import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { Screen } from '@/components/ui/Screen';
-import { RolePill } from '@/components/role/RolePill';
 import { findPlayer, type GameEvent, type GameState, type Phase, type PlayerId, type RoleId } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
-import { colors, space } from '@/theme/tokens';
+import { teamInlay, WIN_MOMENT } from '@/theme/art';
+import { TEAM_VISUALS } from '@/theme/teams';
+import { colors, fonts, gutter, phases, radius, space } from '@/theme/tokens';
 
-/** Oyun sonu: kazanan, herkesin rolü ve tur tur olay özeti. */
+/** Oyun sonu (tasarım 07): kazanan sahnesi, amblemli başlık, tur şeridi, herkesin rolü ve ayrıntılı olay özeti. */
 export function GameOver({ game, onLeave }: { game: GameState; onLeave: () => void }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const winner = game.winner ?? 'village';
-  const phase: Phase = winner === 'vampire' ? 'night' : 'day';
+  const { icon: Emblem, fg } = TEAM_VISUALS[winner];
   // Tek başına kazanan (ör. asılan Deli) varsa başlıkta adı ve rolü yazar.
   const solo = game.winners?.map((id) => findPlayer(game, id)) ?? [];
   const title = solo.length
@@ -26,29 +33,80 @@ export function GameOver({ game, onLeave }: { game: GameState; onLeave: () => vo
   };
   return (
     <Screen
-      phase={phase}
+      phase="day"
       footer={
-        <>
-          <Button label={t.game.newGame} phase={phase} onPress={() => leave('/new-game')} />
-          <Button label={t.game.mainMenu} variant="secondary" onPress={() => leave('/')} />
-        </>
+        <ActionBar
+          secondary={<Button label={t.game.mainMenu} variant="secondary" onPress={() => leave('/')} />}
+          primary={<Button label={t.game.newGame} onPress={() => leave('/new-game')} />}
+        />
       }
     >
-      <AppText variant="display" style={[styles.center, styles.winTitle]}>
-        {title}
-      </AppText>
-      {game.players.map((p) => (
-        <View key={p.id} style={styles.endRow}>
-          <PlayerAvatar name={p.name} size={36} dimmed={!p.alive} />
-          <AppText variant="button" color={p.alive ? colors.text1 : colors.text3} style={[styles.flex1, !p.alive && styles.strike]}>
-            {p.name}
-          </AppText>
-          <RolePill roleId={p.roleId as RoleId} />
-        </View>
-      ))}
-      <AppText variant="h2">{t.game.timeline}</AppText>
+      <View style={styles.hero}>
+        <Moment id={WIN_MOMENT[winner]} inlay={teamInlay(winner)} variant="bare" />
+        <Svg style={StyleSheet.absoluteFill} preserveAspectRatio="none" viewBox="0 0 10 10" pointerEvents="none">
+          <Defs>
+            <LinearGradient id="win-fade" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0.68" stopColor={phases.day.bg} stopOpacity={0} />
+              <Stop offset="1" stopColor={phases.day.bg} stopOpacity={1} />
+            </LinearGradient>
+          </Defs>
+          <Rect width="10" height="10" fill="url(#win-fade)" />
+        </Svg>
+      </View>
+      <View style={styles.titleRow}>
+        <Emblem size={32} />
+        <AppText variant="display" color={fg} style={styles.title}>
+          {title.toLocaleUpperCase(language)}
+        </AppText>
+      </View>
+      <RoundStrip game={game} />
+      <View style={styles.players}>
+        {game.players.map((p, i) => (
+          <Animated.View key={p.id} entering={FadeInUp.delay(200 + i * 80).duration(500)} style={[styles.player, !p.alive && styles.dead]}>
+            <RolePortrait roleId={p.roleId as RoleId} size={34} />
+            <View style={styles.flex1}>
+              <AppText numberOfLines={1} style={[styles.name, !p.alive && styles.strike]}>
+                {p.name}
+              </AppText>
+              <AppText variant="small" color={colors.text2} numberOfLines={1}>
+                {t.roles[p.roleId as RoleId].name}
+              </AppText>
+            </View>
+          </Animated.View>
+        ))}
+      </View>
+      <GroupHeader title={t.game.timeline} />
       <Timeline game={game} />
     </Screen>
+  );
+}
+
+/** Tur şeridi: her gece (ay) ve gün (güneş) için bir düğüm; altında o tur ölenler (yoksa "—"). */
+function RoundStrip({ game }: { game: GameState }) {
+  const deaths = game.events.filter((e) => e.type === 'death');
+  const last = game.events.at(-1);
+  if (!last) return null;
+  const steps: { key: string; phase: Phase; label: string }[] = [];
+  for (let round = 1; round <= last.round; round++) {
+    for (const phase of ['night', 'day'] as const) {
+      if (round === last.round && phase === 'day' && last.phase === 'night') break;
+      const names = deaths.filter((d) => d.round === round && d.phase === phase).map((d) => findPlayer(game, d.playerId).name);
+      steps.push({ key: `${round}-${phase}`, phase, label: names.join(', ') || '—' });
+    }
+  }
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip} style={styles.stripBox}>
+      {steps.map((s) => (
+        <View key={s.key} style={styles.step}>
+          <View style={[styles.node, s.phase === 'night' ? styles.nodeNight : styles.nodeDay]}>
+            {s.phase === 'night' ? <Moon size={16} color={colors.moon} /> : <Sun size={16} color={colors.textInverse} />}
+          </View>
+          <AppText numberOfLines={1} color={colors.text2} style={styles.stepLabel}>
+            {s.label}
+          </AppText>
+        </View>
+      ))}
+    </ScrollView>
   );
 }
 
@@ -106,10 +164,21 @@ export function Timeline({ game }: { game: GameState }) {
 
 const styles = StyleSheet.create({
   flex1: { flex: 1 },
-  center: { textAlign: 'center' },
   strike: { textDecorationLine: 'line-through' },
-  winTitle: { marginTop: space[6] },
-  endRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  hero: { marginHorizontal: -gutter, marginTop: -space[2] },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], marginTop: -space[10] },
+  title: { flexShrink: 1, textAlign: 'center' },
+  stripBox: { borderRadius: radius.md, borderWidth: 2, borderColor: colors.line, backgroundColor: colors.surface1 },
+  strip: { gap: space[3], padding: space[3] },
+  step: { width: 64, alignItems: 'center', gap: space[1] },
+  node: { width: 36, height: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
+  nodeNight: { backgroundColor: phases.night.mist, borderColor: '#7D6CB8' },
+  nodeDay: { backgroundColor: colors.lamp.mid, borderColor: colors.lamp.core },
+  stepLabel: { fontSize: 11, lineHeight: 14 },
+  players: { flexDirection: 'row', flexWrap: 'wrap', rowGap: space[3] },
+  player: { width: '50%', flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: 44, paddingRight: space[2] },
+  dead: { opacity: 0.5 },
+  name: { fontFamily: fonts.bodyBold },
   timeline: { gap: space[4] },
   timelineGroup: { gap: space[1] },
 });

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-/** Footer: [ikincil] [birincil] yan yana, birincil iki kat geniş. */
+/** Footer: [ikincil] [birincil] yan yana; birincil 1.4 kat geniş (tasarım 06). */
 export function ActionBar({ secondary, primary }: { secondary?: ReactNode; primary: ReactNode }) {
   return (
     <View style={styles.actionBar}>
@@ -13,6 +13,6 @@ export function ActionBar({ secondary, primary }: { secondary?: ReactNode; prima
 
 const styles = StyleSheet.create({
   flex1: { flex: 1 },
-  flex2: { flex: 2 },
-  actionBar: { flexDirection: 'row', gap: 10 },
+  flex2: { flex: 1.4 },
+  actionBar: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 });

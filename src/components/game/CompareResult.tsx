@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import type { Player } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
-import { colors, radius, space } from '@/theme/tokens';
+import { colors, phases, radius, space } from '@/theme/tokens';
 
 type Props = { header: ReactNode; summary: ReactNode; first: Player; second: Player; sameTeam: boolean; onDone: () => void };
 
@@ -56,8 +56,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[4],
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface1,
+    borderColor: phases.night.border,
+    backgroundColor: phases.night.surface,
   },
   pair: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   person: { width: 96, alignItems: 'center', gap: space[2] },

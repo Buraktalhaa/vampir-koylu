@@ -1,14 +1,14 @@
-import type { LucideIcon } from 'lucide-react-native';
 import { X } from 'lucide-react-native';
 import type { Ref } from 'react';
-import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View, type TextInputInstance, type TextInputProps } from 'react-native';
 
+import type { Icon as IconComponent } from '@/components/icons/types';
 import { colors, fonts, MAX_FONT_SCALE, radius, space } from '@/theme/tokens';
 
 type Props = Omit<TextInputProps, 'style'> & {
-  ref?: Ref<TextInput>;
+  ref?: Ref<TextInputInstance>;
   /** Solda ikon (ör. arama). */
-  icon?: LucideIcon;
+  icon?: IconComponent;
   /** Verilirse ve metin varsa sağda ✕ temizleme butonu çıkar. */
   onClear?: () => void;
   error?: boolean;
@@ -42,12 +42,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[2],
-    height: 52,
+    height: 48,
     paddingHorizontal: space[4],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.lineStrong,
-    backgroundColor: colors.surface1,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    backgroundColor: colors.bg0,
   },
   error: { borderColor: colors.danger.fg },
   input: { flex: 1, height: '100%', color: colors.text1, fontFamily: fonts.body, fontSize: 16 },

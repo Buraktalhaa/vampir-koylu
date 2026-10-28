@@ -24,7 +24,15 @@ export type Translation = {
   teams: Record<TeamId, { name: string; goal: string }>;
   roles: Record<RoleId, RoleText>;
   quiz: QuizItem[];
-  menu: { tagline: string; resume: string; newGame: string; roles: string; settings: string };
+  menu: {
+    tagline: string;
+    resume: string;
+    /** Devam eden oyunun özeti, ör. "3. Gün · 8 oyuncu". */
+    resumeInfo: (when: string, players: number) => string;
+    newGame: string;
+    roles: string;
+    settings: string;
+  };
   appSettings: {
     title: string;
     language: string;
@@ -43,6 +51,12 @@ export type Translation = {
     noResults: string;
     noResultsHint: (query: string) => string;
     clearFilters: string;
+    /** Detay sayfası: yetenek kartı başlığı, uzun açıklama başlığı, kapat ve sayfa düğmeleri. */
+    ability: string;
+    tip: string;
+    close: string;
+    prev: string;
+    next: string;
   };
   abilityTags: {
     night: string;
@@ -56,6 +70,22 @@ export type Translation = {
     noRepeat: string;
     effects: Record<EffectKind, string>;
   };
+  /** Ansiklopedi detayı: rol kurallarından üretilen kazanma koşulu ve özel durumlar (bkz. i18n/roleTraits). */
+  roleTraits: {
+    winSection: string;
+    specialSection: string;
+    /** Tarafsız: asılınca tek başına kazanır. */
+    winIfLynched: string;
+    /** Tarafsız: rolü çalınca o takımla kazanır. */
+    winAsThief: string;
+    appearsAs: (team: string) => string;
+    hiddenFromTeam: string;
+    knowsTeammates: string;
+    convertsWhenBitten: (team: string) => string;
+    voteWeight: (n: number) => string;
+    stealsRole: string;
+    unlocksWhenTeamGone: string;
+  };
   common: { back: string };
   setup: {
     step: (current: number, total: number) => string;
@@ -65,11 +95,14 @@ export type Translation = {
     clear: string;
     duplicate: string;
     needMore: (n: number) => string;
-    fixFirst: string;
     none: string;
+    fixed: string;
+    /** "Yok" seçili kartta sayaç yerine. */
+    notInGame: string;
+    /** Kurulum alt çubuğundaki yer sayacının etiketi. */
+    slotsLabel: string;
     summaryCount: (roles: number, players: number) => string;
     summaryDetail: (fixed: number, random: number) => string;
-    issues: (n: number) => string;
     summaryTitle: string;
     summaryPlayers: string;
     summaryDiscussion: string;
@@ -112,6 +145,8 @@ export type Translation = {
     nobodyDiedText: string;
     leftGame: (name: string, alive: number) => string;
     rolesAtEnd: string;
+    /** Sabah ölüm kartının alt satırı. */
+    nightVictim: string;
     toDiscussion: string;
     seeResult: string;
     soloWin: (name: string, role: string) => string;
@@ -149,6 +184,8 @@ export type Translation = {
     villageDecided: string;
     hangedWith: (votes: number) => string;
     nobodyHangedTitle: string;
+    hangedTitle: (name: string) => string;
+    roleRevealed: string;
     tieText: (names: string) => string;
     noVotesText: string;
     revengeTriggered: (name: string) => string;
@@ -166,12 +203,16 @@ export type Translation = {
     choose: string;
     chooseTarget: string;
     useShield: string;
-    sleepTitle: string;
+    /** Gece bekleme ekranı: soru kartı başlığı, bekleme notu, alt not. */
+    quizTitle: string;
+    optionsSoon: string;
+    pickToClose: string;
     sleepText: string;
-    continueIn: (s: number) => string;
     giveTo: string;
     dontLook: string;
     tapToRevealName: (name: string) => string;
+    /** Devir ekranındaki yuvarlak düğmenin etiketi. */
+    tap: string;
     turnOf: (i: number, n: number) => string;
     yourRole: (name: string) => string;
     goal: string;

@@ -4,15 +4,15 @@
     "slug": "vampir-koylu",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/brand/icon-1024.png",
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0E0C18",
-        "foregroundImage": "./assets/android-icon-foreground.png"
+        "foregroundImage": "./assets/brand/adaptive-foreground.png",
+        "backgroundImage": "./assets/brand/adaptive-background.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -27,9 +27,9 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-icon.png",
-          "imageWidth": 220,
-          "backgroundColor": "#0E0C18"
+          "image": "./assets/brand/splash-logo.png",
+          "imageWidth": 260,
+          "backgroundColor": "#0B0705"
         }
       ],
       [
@@ -40,7 +40,8 @@
           "enableBackgroundPlayback": false
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-status-bar"
     ],
     "scheme": "vampirkoylu",
     "experiments": {

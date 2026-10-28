@@ -1,11 +1,10 @@
 import { Check, Lock, Skull } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import type { Phase, Player, PlayerId } from '@/game/types';
-import { colors, phases, radius, space } from '@/theme/tokens';
-
 import { AppText } from '@/components/ui/AppText';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
+import type { Phase, Player, PlayerId } from '@/game/types';
+import { colors, fonts, phases, radius, space } from '@/theme/tokens';
 
 export type PickerItem = {
   player: Player;
@@ -32,15 +31,19 @@ type Props = {
   columns?: number;
 };
 
-/** Oyuncu ızgarası: kart hücrelerde yuvarlak avatar. Seçili / seçilemez / ölü / rozet durumları. */
+/**
+ * Oyuncu ızgarası (tasarım 04): perde önünde kukla avatar + ad. Seçili: açık halka, ışıltı, onay rozeti (ikinci hedefte "2").
+ * Ölü: soluk, kesikli halka, kafatası rozeti, üstü çizili ad. Seçilemez: soluk + nedeni.
+ */
 export function PlayerPicker({ items, selectedId, selectedIds, onSelect, phase, columns }: Props) {
-  const { accent, selectBg } = phases[phase];
+  const { accent, selectBg, text2, border } = phases[phase];
   const cols = columns ?? (items.length > 9 ? 4 : 3);
-  const compact = cols >= 4;
+  const avatar = cols >= 4 ? 52 : 64;
   return (
     <View style={styles.grid}>
       {items.map(({ player, disabledReason, note, count, badge, trailing }) => {
-        const selected = player.id === selectedId || !!selectedIds?.includes(player.id);
+        const order = selectedIds?.indexOf(player.id) ?? -1;
+        const selected = player.id === selectedId || order >= 0;
         const dead = !player.alive;
         const disabled = !!disabledReason || dead || !onSelect;
         return (
@@ -51,47 +54,45 @@ export function PlayerPicker({ items, selectedId, selectedIds, onSelect, phase, 
               accessibilityLabel={[player.name, disabledReason, note].filter(Boolean).join(', ')}
               disabled={disabled}
               onPress={() => onSelect?.(player.id)}
-              style={({ pressed }) => [
-                styles.card,
-                compact && styles.cardCompact,
-                selected && { borderColor: accent, borderWidth: 2, backgroundColor: selectBg },
-                (disabledReason || dead) && styles.cardOff,
-                pressed && styles.pressed,
-              ]}
+              style={({ pressed }) => [styles.card, selected && { backgroundColor: selectBg }, disabledReason && !dead && styles.off, pressed && styles.pressed]}
             >
-              <PlayerAvatar name={player.name} size={compact ? 32 : 40} dimmed={dead || !!disabledReason} />
+              <View style={selected && styles.lift}>
+                <PlayerAvatar name={player.name} size={avatar} dimmed={dead} selected={selected} />
+                {selected || dead || badge || disabledReason ? (
+                  <View style={[styles.corner, { borderColor: selected ? accent : border, backgroundColor: selected ? accent : colors.bg0 }]}>
+                    {selected ? (
+                      order > 0 ? (
+                        <AppText variant="caption" color={colors.textInverse}>
+                          {order + 1}
+                        </AppText>
+                      ) : (
+                        <Check size={12} color={colors.textInverse} strokeWidth={3} />
+                      )
+                    ) : dead ? (
+                      <Skull size={11} color={text2} />
+                    ) : (
+                      (badge ?? <Lock size={10} color={text2} />)
+                    )}
+                  </View>
+                ) : null}
+              </View>
               <AppText
-                variant={compact ? 'caption' : 'button'}
                 numberOfLines={1}
-                color={dead || disabledReason ? colors.text3 : colors.text1}
-                style={[styles.center, dead && styles.strike]}
+                color={selected ? accent : dead || disabledReason ? text2 : colors.text1}
+                style={[styles.name, selected && styles.nameSelected, dead && styles.strike]}
               >
                 {player.name}
               </AppText>
               {disabledReason || note ? (
-                <AppText variant="caption" numberOfLines={2} color={colors.text3} style={styles.center}>
+                <AppText variant="small" numberOfLines={2} color={text2} style={styles.note}>
                   {disabledReason ?? note}
                 </AppText>
               ) : null}
-
               {count ? (
-                <View style={[styles.corner, styles.left]}>
-                  <AppText variant="caption">{count}</AppText>
-                </View>
-              ) : null}
-              {selected ? (
-                <View style={[styles.corner, styles.right, { backgroundColor: accent }]}>
-                  <Check size={13} color={colors.textInverse} strokeWidth={3} />
-                </View>
-              ) : dead ? (
-                <View style={[styles.corner, styles.right]}>
-                  <Skull size={12} color={colors.text2} />
-                </View>
-              ) : badge ? (
-                <View style={[styles.cornerBare, styles.right]}>{badge}</View>
-              ) : disabledReason ? (
-                <View style={[styles.corner, styles.right]}>
-                  <Lock size={11} color={colors.text2} />
+                <View style={[styles.count, { borderColor: accent }]}>
+                  <AppText variant="caption" color={accent}>
+                    {count}
+                  </AppText>
                 </View>
               ) : null}
             </Pressable>
@@ -104,37 +105,38 @@ export function PlayerPicker({ items, selectedId, selectedIds, onSelect, phase, 
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
-  cell: { padding: 5 },
-  card: {
-    minHeight: 88,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[1],
-    paddingVertical: space[2],
-    paddingHorizontal: space[1],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface1,
-  },
-  cardCompact: { minHeight: 76, paddingVertical: space[2] },
-  cardOff: { borderStyle: 'dashed', backgroundColor: 'transparent' },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.97 }] },
-  center: { textAlign: 'center' },
-  strike: { textDecorationLine: 'line-through' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },
+  cell: { paddingHorizontal: 4, paddingVertical: 6 },
+  card: { alignItems: 'center', gap: space[2], paddingVertical: space[3], paddingHorizontal: space[1], borderRadius: radius.md },
+  off: { opacity: 0.38 },
+  pressed: { opacity: 0.85 },
+  lift: { transform: [{ scale: 1.04 }] },
   corner: {
     position: 'absolute',
-    top: 6,
-    minWidth: 22,
-    height: 22,
-    paddingHorizontal: 4,
+    top: -2,
+    right: -2,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 3,
     borderRadius: radius.pill,
-    backgroundColor: colors.surface3,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cornerBare: { position: 'absolute', top: 4 },
-  left: { left: 6 },
-  right: { right: 6 },
+  name: { textAlign: 'center', fontFamily: fonts.bodySemiBold, fontSize: 14, lineHeight: 20 },
+  nameSelected: { fontFamily: fonts.bodyBold },
+  note: { textAlign: 'center', fontSize: 12, lineHeight: 16 },
+  strike: { textDecorationLine: 'line-through' },
+  count: {
+    position: 'absolute',
+    top: space[2],
+    left: space[2],
+    minWidth: 22,
+    height: 22,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    backgroundColor: colors.bg0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

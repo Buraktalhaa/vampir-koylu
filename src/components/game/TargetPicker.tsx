@@ -6,9 +6,7 @@ import { type PickerItem, PlayerPicker } from '@/components/player/PlayerPicker'
 import { Screen } from '@/components/ui/Screen';
 import type { Phase, PlayerId } from '@/game';
 import { useLanguage } from '@/i18n/LanguageProvider';
-import { colors } from '@/theme/tokens';
-
-import { ActionBar } from '@/components/ui/ActionBar';
+import { phases } from '@/theme/tokens';
 
 type TargetPickerProps = {
   phase: Phase;
@@ -37,24 +35,21 @@ export function TargetPicker({ phase, header, pill, question, hint, items, count
     <Screen
       phase={phase}
       footer={
-        <ActionBar
-          secondary={onPass ? <Button label={t.game.pass} variant="secondary" onPress={onPass} /> : undefined}
-          primary={
-            <Button
-              label={selected.length ? t.game.confirmWith(selected.map(nameOf).join(' & ')) : t.game.confirm}
-              phase={phase}
-              disabled={!ready}
-              onPress={() => ready && onConfirm(selected[0], selected[1])}
-            />
-          }
-        />
+        <>
+          <Button
+            label={selected.length ? t.game.confirmWith(selected.map(nameOf).join(' & ')) : t.game.confirm}
+            disabled={!ready}
+            onPress={() => ready && onConfirm(selected[0], selected[1])}
+          />
+          {onPass ? <Button label={t.game.pass} variant="tertiary" onPress={onPass} /> : null}
+        </>
       }
     >
       {header}
       {pill}
-      <AppText variant="h2">{question}</AppText>
+      <AppText>{question}</AppText>
       {hint ? (
-        <AppText variant="small" color={colors.text2}>
+        <AppText variant="small" color={phases[phase].text2}>
           {hint}
         </AppText>
       ) : null}
